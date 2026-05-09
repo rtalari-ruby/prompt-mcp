@@ -1,14 +1,30 @@
 ---
 id: claude-prompting-best-practices
-title: "Claude prompting best practices (master doc)"
+title: Claude prompting best practices (master doc)
 category: claude-specific
 tags: []
 sources:
-  - https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices
+  - >-
+    https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices
 scraped_from: docs.claude.com
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use this as a starting checklist when designing or revising prompts for
+  Claude, especially for production workflows where output format, reasoning
+  depth, tool use, tone, or latency matter. It is also useful when migrating
+  between Claude model versions and re-tuning behavior that changed.
+when_not_to_use: >-
+  Do not treat every technique as mandatory; adding examples, XML structure,
+  thinking instructions, or agent scaffolding can be unnecessary overhead for
+  simple one-shot tasks. Avoid piling on generic best-practice language if the
+  real issue is model choice, effort level, tool availability, or unclear
+  product requirements.
+claude_notes: >-
+  Claude responds well to explicit scope, XML-tagged structure, examples of
+  desired outputs, and clear instructions for when to think, use tools, or
+  provide progress updates. For Claude Opus 4.7, tune effort levels directly for
+  reasoning depth, use large token budgets for high-effort agentic work, and
+  state broad application of instructions explicitly because the model follows
+  prompts more literally.
 ---
 # Prompting best practices
 

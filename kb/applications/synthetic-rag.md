@@ -1,15 +1,30 @@
 ---
 id: synthetic-rag
-title: "Generating Synthetic Dataset for RAG"
+title: Generating Synthetic Dataset for RAG
 category: applications
 tags: []
 sources:
-  - https://www.promptingguide.ai/applications/synthetic-rag
+  - 'https://www.promptingguide.ai/applications/synthetic-rag'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use this when you have a target RAG corpus but few or no labeled
+  query-document pairs, especially in specialized domains, low-resource
+  languages, or tasks with a domain-specific definition of relevance. It is
+  useful for quickly creating training/evaluation data to fine-tune or benchmark
+  a retriever before investing in manual labeling.
+when_not_to_use: >-
+  Do not use it as a substitute for validation when errors have high cost;
+  synthetic labels can encode prompt bias, hallucinated intent, or the wrong
+  relevance criterion. It may be unnecessary overhead if an off-the-shelf
+  retriever already performs well or if you lack representative seed examples
+  and quality checks.
+claude_notes: >-
+  Use clear XML sections such as <task>, <examples>, <document>, and
+  <output_format> to keep few-shot examples and target documents distinct. Put
+  the source document before the generation instruction when document fidelity
+  matters, and request only the synthetic query or label in a constrained format
+  for easier parsing.
 ---
 # Generating Synthetic Dataset for RAG
 

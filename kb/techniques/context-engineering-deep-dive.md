@@ -1,15 +1,29 @@
 ---
 id: context-engineering-deep-dive
-title: "Context Engineering Deep Dive: Building a Deep Research Agent"
+title: 'Context Engineering Deep Dive: Building a Deep Research Agent'
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/agents/context-engineering-deep-dive
+  - 'https://www.promptingguide.ai/agents/context-engineering-deep-dive'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use context engineering when building tool-using or multi-step agents that
+  must reliably plan, call tools, track state, and produce structured outputs.
+  It is especially valuable when a single agent is becoming unreliable,
+  forgetting steps, or accumulating too much context, and you need clearer
+  responsibilities or multi-agent separation.
+when_not_to_use: >-
+  Do not over-engineer simple one-shot prompts, small transformations, or tasks
+  that do not require tools, memory, planning, or orchestration. Multi-agent
+  designs can add latency, cost, and failure points if the task can be handled
+  reliably by one focused prompt.
+claude_notes: >-
+  Claude often benefits from explicit tool-use instructions in the system
+  prompt, including allowed status values, ordering constraints, and examples of
+  tool inputs. Use XML tags to separate role, workflow, tools, state schema, and
+  final report requirements; for long research inputs, place documents or source
+  material before instructions when appropriate.
 ---
 # Context Engineering Deep Dive: Building a Deep Research Agent
 

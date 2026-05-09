@@ -1,15 +1,28 @@
 ---
 id: multimodal-cot
-title: "Multimodal CoT Prompting"
+title: Multimodal CoT Prompting
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/techniques/multimodalcot
+  - 'https://www.promptingguide.ai/techniques/multimodalcot'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use multimodal CoT when a task requires reasoning over both images and text,
+  such as visual science questions, chart interpretation, diagrams, screenshots,
+  or document images. It is especially useful when intermediate visual
+  observations can improve answer accuracy.
+when_not_to_use: >-
+  Do not use it for simple image labeling, OCR-only tasks, or straightforward
+  questions where a direct answer is sufficient. Avoid it when latency, cost, or
+  verbosity matter more than reasoning quality, or when generated rationales
+  could amplify visual misinterpretations.
+claude_notes: >-
+  With Claude, provide the image or document before the question and ask for key
+  visual evidence plus a concise answer rather than full hidden
+  chain-of-thought. XML tags can separate <image_context>, <question>, and
+  <answer_format>; for hard visual reasoning, consider extended thinking if
+  available.
 ---
 # Multimodal CoT Prompting
 

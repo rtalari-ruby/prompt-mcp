@@ -1,15 +1,29 @@
 ---
 id: program-aided-language
-title: "PAL (Program-Aided Language Models)"
+title: PAL (Program-Aided Language Models)
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/techniques/pal
+  - 'https://www.promptingguide.ai/techniques/pal'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use PAL when the task can be reliably expressed as executable logic, such as
+  arithmetic, date calculations, symbolic manipulation, simulations, or data
+  transformations. It is especially useful when natural-language reasoning is
+  error-prone but a runtime like Python can compute the final answer
+  deterministically.
+when_not_to_use: >-
+  Do not use PAL for tasks that are mostly qualitative, subjective, or require
+  broad judgment rather than computation. Avoid executing model-generated code
+  in unsandboxed environments, and skip PAL when the setup cost of a
+  runtime/tool call outweighs the complexity of the task.
+claude_notes: >-
+  With Claude, put the problem, constraints, and available libraries in clear
+  XML sections, and ask for code in a dedicated tag such as <program>. If you
+  need execution, connect Claude to a sandboxed code tool; otherwise ask it to
+  produce code plus a final answer separately. For complex programs, extended
+  thinking can help Claude plan before emitting executable code.
 ---
 # PAL (Program-Aided Language Models)
  

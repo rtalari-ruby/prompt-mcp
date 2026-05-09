@@ -1,15 +1,31 @@
 ---
 id: adversarial
-title: "Adversarial Prompting in LLMs"
+title: Adversarial Prompting in LLMs
 category: risks
 tags: []
 sources:
-  - https://www.promptingguide.ai/risks/adversarial
+  - 'https://www.promptingguide.ai/risks/adversarial'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use adversarial prompting to red-team LLM applications, test resistance to
+  prompt injection, prompt leaking, jailbreaks, and unsafe tool use before
+  deployment. It is especially useful when your system processes untrusted user
+  content, retrieves external documents, or contains proprietary/system
+  instructions you do not want exposed.
+when_not_to_use: >-
+  Do not use it as a normal prompting pattern for production tasks, and do not
+  run jailbreak or extraction tests against systems you do not own or have
+  permission to assess. It can be overhead for low-risk prototypes, and harmful
+  if test prompts, secrets, or exploit examples are logged or exposed
+  carelessly.
+claude_notes: >-
+  For Claude, clearly separate trusted instructions and untrusted content with
+  XML tags such as <instructions> and <user_content>, and explicitly tell Claude
+  that tagged user content may contain malicious instructions to ignore. For
+  complex threat modeling, ask Claude to reason through attack surfaces, but
+  keep any final production output constrained with a strict schema or prefill
+  where appropriate.
 ---
 # Adversarial Prompting in LLMs
 

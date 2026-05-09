@@ -1,15 +1,28 @@
 ---
 id: ai-workflows-vs-ai-agents
-title: "AI Workflows vs. AI Agents"
+title: AI Workflows vs. AI Agents
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/agents/ai-workflows-vs-ai-agents
+  - 'https://www.promptingguide.ai/agents/ai-workflows-vs-ai-agents'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use predefined AI workflows for stable, well-scoped tasks that need
+  reliability, explicit control, auditability, and predictable cost. Use agents
+  when tasks are open-ended, require adaptive reasoning or dynamic tool use, and
+  the exact sequence of steps cannot be known upfront.
+when_not_to_use: >-
+  Do not use agents when a deterministic workflow, router, prompt chain, or
+  parallel pipeline can solve the problem more cheaply and reliably. Avoid
+  autonomous agents for high-risk production flows without strong guardrails,
+  observability, tool permissions, and human review.
+claude_notes: >-
+  For Claude-based workflows or agents, put long reference material before the
+  task instructions and use XML tags to separate context, tools, policies,
+  examples, and output format. For complex agent planning, consider enabling
+  extended thinking and require the model to plan before tool use while keeping
+  final outputs concise.
 ---
 # AI Workflows vs. AI Agents
 

@@ -1,15 +1,28 @@
 ---
 id: pf
-title: "Prompt Function"
+title: Prompt Function
 category: applications
 tags: []
 sources:
-  - https://www.promptingguide.ai/applications/pf
+  - 'https://www.promptingguide.ai/applications/pf'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use prompt functions when you repeatedly perform the same task and want a
+  lightweight, reusable command format without building code or tools. They are
+  especially useful for multi-step workflows where each step has a clear input,
+  rule, and output that can be chained.
+when_not_to_use: >-
+  Avoid this when the task is one-off, ambiguous, or requires strict execution
+  guarantees; the model may not reliably behave like a real programming runtime.
+  For complex branching logic, validation, state management, or
+  security-sensitive operations, use actual code, tools, or structured function
+  calling instead.
+claude_notes: >-
+  For Claude, define reusable prompt functions with clear XML-style blocks such
+  as <function_name>, <input>, <rules>, and <output_format>. Put long source
+  documents or inputs before the instruction that calls the function, and use
+  explicit output constraints if you want Claude to return only the result.
 ---
 # Prompt Function
 

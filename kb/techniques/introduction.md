@@ -1,15 +1,28 @@
 ---
 id: introduction
-title: "Introduction to AI Agents"
+title: Introduction to AI Agents
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/agents/introduction
+  - 'https://www.promptingguide.ai/agents/introduction'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use agents when a task requires multiple steps, planning, adaptation, tool/API
+  access, or memory across interactions. They are especially useful for
+  research, customer support, reporting, booking, recommendations, and workflows
+  that need current or private data beyond the model’s built-in knowledge.
+when_not_to_use: >-
+  Do not use agents for simple, narrow, one-shot tasks like rewriting,
+  translation, summarization, or drafting where a single prompt is sufficient.
+  Avoid agentic designs when tool access creates unnecessary risk, latency,
+  cost, or when actions require tight human approval and auditability.
+claude_notes: >-
+  For Claude, define available tools and decision rules clearly, and use XML
+  tags to separate goals, constraints, tools, memory, and output format. For
+  complex agent tasks, put relevant documents/context before the instructions
+  and consider asking Claude to plan or reflect before acting, while requiring
+  confirmation before irreversible external actions.
 ---
 # Introduction to AI Agents
 

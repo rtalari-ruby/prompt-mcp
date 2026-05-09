@@ -1,15 +1,28 @@
 ---
 id: context-caching
-title: "Context Caching with Gemini 1.5 Flash"
+title: Context Caching with Gemini 1.5 Flash
 category: applications
 tags: []
 sources:
-  - https://www.promptingguide.ai/applications/context-caching
+  - 'https://www.promptingguide.ai/applications/context-caching'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use context caching when you repeatedly query the same large document set or
+  long background context across an interactive session, such as research-paper
+  analysis, codebase Q&A, or report review. It is most valuable when the cached
+  context is stable and large enough that resending it each turn would be slow
+  or expensive.
+when_not_to_use: >-
+  Do not use it for one-off prompts, rapidly changing context, or small inputs
+  where cache setup adds more complexity than it saves. Avoid relying on cached
+  context when freshness is critical unless you have a clear invalidation or TTL
+  strategy.
+claude_notes: >-
+  For Claude, use prompt caching for stable prefixes such as system
+  instructions, long documents, examples, or tool definitions. Put cacheable
+  content early in the prompt, keep it byte-stable across requests, and
+  structure large documents with clear XML tags before asking the query.
 ---
 # Context Caching with Gemini 1.5 Flash
 

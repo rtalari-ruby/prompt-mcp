@@ -1,15 +1,28 @@
 ---
 id: coding
-title: "Generating Code"
+title: Generating Code
 category: applications
 tags: []
 sources:
-  - https://www.promptingguide.ai/applications/coding
+  - 'https://www.promptingguide.ai/applications/coding'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use code generation when you need boilerplate, small functions, query drafts,
+  test data, schemas, or a starting implementation from clear requirements. It
+  is especially useful for accelerating routine coding tasks or translating
+  comments/specs into code you will review and run.
+when_not_to_use: >-
+  Do not rely on generated code without testing, especially for security,
+  production data, migrations, or unfamiliar libraries where small omissions can
+  break behavior. Avoid it when requirements are vague or when correctness
+  depends on hidden context the model does not have.
+claude_notes: >-
+  For Claude, put requirements, existing code, schemas, and constraints in XML
+  tags such as <requirements>, <schema>, and <existing_code>, then specify the
+  exact output format. For larger codebases, provide relevant documents/code
+  before the task and ask Claude to generate tests or note assumptions; use
+  extended thinking for complex design or debugging tasks.
 ---
 # Generating Code
 

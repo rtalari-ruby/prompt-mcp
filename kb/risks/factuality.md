@@ -1,15 +1,27 @@
 ---
 id: factuality
-title: "Factuality"
+title: Factuality
 category: risks
 tags: []
 sources:
-  - https://www.promptingguide.ai/risks/factuality
+  - 'https://www.promptingguide.ai/risks/factuality'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use factuality prompting when answers must be accurate, source-grounded, or
+  safe from hallucination, especially for domain knowledge, summaries, QA, or
+  user-facing claims. Provide trusted context and explicitly allow responses
+  like “I don’t know” or “not enough information” when evidence is missing.
+when_not_to_use: >-
+  Don’t rely on prompting alone when correctness is mission-critical; use
+  retrieval, validation, citations, or human review. Avoid excessive factuality
+  scaffolding for simple creative, brainstorming, or low-risk tasks where
+  uncertainty handling would add unnecessary friction.
+claude_notes: >-
+  For Claude, put source material before the question and separate it with XML
+  tags such as <sources> and <task>. Instruct Claude to answer only from the
+  provided sources, cite relevant passages if useful, and say when the sources
+  do not contain enough information.
 ---
 # Factuality
 

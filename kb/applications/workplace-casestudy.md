@@ -1,15 +1,29 @@
 ---
 id: workplace-casestudy
-title: "Graduate Job Classification Case Study"
+title: Graduate Job Classification Case Study
 category: applications
 tags: []
 sources:
-  - https://www.promptingguide.ai/applications/workplace-casestudy
+  - 'https://www.promptingguide.ai/applications/workplace-casestudy'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use this pattern for production text classification where the decision
+  criteria can be stated clearly and small prompt changes can be evaluated
+  against labeled data. Prioritize explicit role/task instructions, repeated key
+  criteria, and targeted clarifications for common failure modes before adding
+  examples or complex reasoning.
+when_not_to_use: >-
+  Do not assume few-shot CoT will help simple classification tasks; it may add
+  noise or reduce performance. Avoid overly strict output templates if they
+  degrade classification quality, unless downstream parsing reliability is more
+  important than accuracy.
+claude_notes: >-
+  For Claude, wrap the job posting and criteria in XML tags such as
+  <job_posting> and <classification_criteria> to reduce ambiguity. If you need
+  machine-readable output, request JSON and consider prefilling the opening
+  brace; use extended thinking only when the classification requires nuanced
+  tradeoffs, not for straightforward labels.
 ---
 # Graduate Job Classification Case Study
 

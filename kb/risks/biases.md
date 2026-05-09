@@ -1,15 +1,28 @@
 ---
 id: biases
-title: "Biases"
+title: Biases
 category: risks
 tags: []
 sources:
-  - https://www.promptingguide.ai/risks/biases
+  - 'https://www.promptingguide.ai/risks/biases'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use bias-aware prompting when building few-shot prompts for classification,
+  ranking, evaluation, or any task where examples may steer the model toward a
+  label, style, or outcome. Balance exemplar distributions and randomize their
+  order to reduce unintended label or recency bias.
+when_not_to_use: >-
+  Do not rely on prompt balancing alone for high-stakes fairness, safety, legal,
+  medical, or hiring decisions; use evaluation, moderation, filtering, and
+  domain-specific safeguards. Avoid adding many examples if the task is simple
+  enough to specify directly, since extra exemplars can introduce unnecessary
+  bias or confusion.
+claude_notes: >-
+  For Claude, place examples in clear XML tags such as <examples> and the item
+  to classify in a separate <input> block. Keep label definitions explicit, use
+  balanced and shuffled examples, and test multiple exemplar orders to check
+  whether outputs change.
 ---
 # Biases
 

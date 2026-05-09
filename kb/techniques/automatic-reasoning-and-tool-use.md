@@ -1,15 +1,30 @@
 ---
 id: automatic-reasoning-and-tool-use
-title: "Automatic Reasoning and Tool-use (ART)"
+title: Automatic Reasoning and Tool-use (ART)
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/techniques/art
+  - 'https://www.promptingguide.ai/techniques/art'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use ART for complex, multi-step tasks where the model must decide when to
+  reason, decompose the problem, and call external tools such as search,
+  calculators, code execution, or APIs. It is especially useful when you have a
+  reusable library of task demonstrations and tool examples that can be
+  retrieved for new tasks.
+when_not_to_use: >-
+  Avoid ART for simple single-step tasks where tool orchestration adds
+  unnecessary latency, cost, and failure modes. Do not use it when tool outputs
+  are unreliable, unsafe, or unavailable, or when you cannot constrain and
+  validate the model's tool calls.
+claude_notes: >-
+  For Claude, define tools with structured tool/function calling where possible,
+  and place task libraries, tool descriptions, and demonstrations in clear XML
+  sections such as <tools>, <examples>, and <task>. For difficult
+  decompositions, extended thinking can help Claude plan tool use before acting,
+  while keeping tool outputs clearly separated from user instructions to reduce
+  prompt-injection risk.
 ---
 # Automatic Reasoning and Tool-use (ART)
 

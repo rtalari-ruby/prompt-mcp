@@ -1,15 +1,30 @@
 ---
 id: directional-stimulus-prompting
-title: "Directional Stimulus Prompting"
+title: Directional Stimulus Prompting
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/techniques/dsp
+  - 'https://www.promptingguide.ai/techniques/dsp'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use directional stimulus prompting when you can provide concise hints,
+  keywords, constraints, or an auxiliary model-generated “stimulus” that should
+  steer the model toward a specific output, especially for summarization or
+  controlled generation. It is most useful when standard prompting is too
+  underspecified and you have repeatable tasks where optimizing or curating
+  hints is worthwhile.
+when_not_to_use: >-
+  Do not use it for simple one-off prompts where manually adding hints creates
+  unnecessary overhead. Avoid it when the hints may bias the model toward
+  unsupported content, reduce faithfulness, or when you cannot validate the
+  quality of the stimulus generator.
+claude_notes: >-
+  For Claude, place hints in clear XML tags such as <hints> or
+  <directional_stimulus> and keep source documents separately tagged, preferably
+  before the task instruction for document-heavy workflows. Explicitly tell
+  Claude whether hints are mandatory constraints or optional guidance, and
+  instruct it not to invent facts beyond the provided source.
 ---
 # Directional Stimulus Prompting
 

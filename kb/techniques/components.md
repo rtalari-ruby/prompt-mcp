@@ -1,15 +1,28 @@
 ---
 id: components
-title: "Agent Components"
+title: Agent Components
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/agents/components
+  - 'https://www.promptingguide.ai/agents/components'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use an agent architecture when a task requires multiple steps, adaptive
+  planning, tool calls, and retaining information across iterations. It is
+  especially appropriate for workflows like research, coding, data analysis, web
+  automation, or tasks where the model must decide what to do next rather than
+  simply answer once.
+when_not_to_use: >-
+  Do not use an agent setup for simple, one-shot prompts, deterministic
+  transformations, or tasks where a fixed workflow is cheaper and more reliable.
+  Avoid adding memory or tool access unless it clearly improves outcomes, since
+  agents increase latency, cost, complexity, and failure modes.
+claude_notes: >-
+  For Claude, define tools clearly with schemas and describe when each should or
+  should not be used. Put long documents or retrieved context before the
+  instruction, use XML tags to separate goals, tools, memory, and constraints,
+  and consider extended thinking for complex planning tasks.
 ---
 # Agent Components
 

@@ -1,15 +1,30 @@
 ---
 id: generating-textbooks
-title: "Tackling Generated Datasets Diversity"
+title: Tackling Generated Datasets Diversity
 category: applications
 tags: []
 sources:
-  - https://www.promptingguide.ai/applications/generating-textbooks
+  - 'https://www.promptingguide.ai/applications/generating-textbooks'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use this when generating synthetic training data and you need broad coverage
+  across labels, vocabulary, entities, styles, or edge cases. It is especially
+  useful when real data is scarce, private, or expensive, and you can define
+  controllable attributes to randomize per example.
+when_not_to_use: >-
+  Do not rely on it when synthetic data must closely match a real production
+  distribution unless you have validation data to check realism and bias. It can
+  add overhead or harm quality if the random attributes create unnatural
+  combinations, mislabeled examples, or repetitive artifacts that a downstream
+  model may learn.
+claude_notes: >-
+  For Claude, provide randomized variables, labels, and constraints in clear XML
+  tags such as <label>, <required_words>, and <features>, then ask for
+  structured output with both the generated sample and its metadata. If
+  generating complex examples, use a document-first or staged approach: first
+  generate summaries/attributes, then feed them into a second prompt for the
+  final sample.
 ---
 # Tackling Generated Datasets Diversity
 

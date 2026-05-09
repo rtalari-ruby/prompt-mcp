@@ -1,14 +1,28 @@
 ---
 id: overview
-title: "Prompt engineering overview"
+title: Prompt engineering overview
 category: claude-specific
 tags: []
 sources:
-  - https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview
+  - >-
+    https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview
 scraped_from: docs.claude.com
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use prompt engineering when you already have clear success criteria,
+  evaluation methods, and an initial prompt that needs improvement. It is most
+  useful for failures caused by unclear instructions, missing context, poor
+  formatting, weak examples, or suboptimal task decomposition.
+when_not_to_use: >-
+  Do not start with prompt engineering if you lack defined success criteria or a
+  way to test improvements. It is also not the best lever for issues like
+  latency, cost, or capability gaps that may be better solved by model choice,
+  architecture, tools, or data changes.
+claude_notes: >-
+  For Claude, start with the current Claude prompting best practices and use
+  Console tools such as the prompt generator, templates, variables, and prompt
+  improver. Claude often benefits from clear structure, XML tags, examples,
+  document-first ordering for long inputs, and explicit thinking or
+  decomposition instructions where appropriate.
 ---
 # Prompt engineering overview
 

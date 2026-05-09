@@ -1,15 +1,28 @@
 ---
 id: meta-prompting
-title: "Meta Prompting"
+title: Meta Prompting
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/techniques/meta-prompting
+  - 'https://www.promptingguide.ai/techniques/meta-prompting'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use meta prompting when the task benefits from a reusable structure, solution
+  pattern, or reasoning template rather than domain-specific examples. It is
+  especially useful for math, coding, theoretical reasoning, and other complex
+  tasks where you want zero-shot or token-efficient guidance.
+when_not_to_use: >-
+  Avoid it when the model lacks the underlying domain knowledge needed to solve
+  the task, since structure alone will not supply missing facts. It can also be
+  unnecessary overhead for simple requests or harmful for novel tasks where
+  concrete examples are more important than abstract templates.
+claude_notes: >-
+  Claude responds well to meta prompts written with clear XML sections such as
+  <task>, <structure>, <constraints>, and <output_format>. For complex
+  reasoning, consider asking Claude to use extended thinking internally and
+  provide only the final structured answer; you can also prefill the desired
+  response skeleton when strict formatting matters.
 ---
 # Meta Prompting
 

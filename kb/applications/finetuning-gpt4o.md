@@ -1,15 +1,28 @@
 ---
 id: finetuning-gpt4o
-title: "Fine-Tuning with GPT-4o Models"
+title: Fine-Tuning with GPT-4o Models
 category: applications
 tags: []
 sources:
-  - https://www.promptingguide.ai/applications/finetuning-gpt4o
+  - 'https://www.promptingguide.ai/applications/finetuning-gpt4o'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use fine-tuning when you need consistent behavior at scale for a narrow task,
+  such as classification, extraction, domain-specific formatting, tone control,
+  or repeated adherence to specialized instructions. It is most useful after you
+  have a stable dataset of high-quality examples and baseline prompting or RAG
+  is not reliable enough.
+when_not_to_use: >-
+  Do not use fine-tuning for one-off tasks, rapidly changing requirements, or
+  cases where missing knowledge should be supplied through retrieval instead. It
+  can add cost, evaluation burden, and maintenance risk if your training data is
+  small, noisy, biased, or likely to become outdated.
+claude_notes: >-
+  For Claude, first try strong prompt design with XML tags, clear rubrics,
+  few-shot examples, and document-first ordering before pursuing model
+  customization. Extended thinking can help with complex reasoning tasks, while
+  prefilling can improve output format control without fine-tuning.
 ---
 # Fine-Tuning with GPT-4o Models
 

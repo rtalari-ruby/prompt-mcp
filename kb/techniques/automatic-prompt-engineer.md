@@ -1,15 +1,28 @@
 ---
 id: automatic-prompt-engineer
-title: "Automatic Prompt Engineer (APE)"
+title: Automatic Prompt Engineer (APE)
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/techniques/ape
+  - 'https://www.promptingguide.ai/techniques/ape'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use APE when you have a measurable task, evaluation set, and budget to
+  generate and test many candidate prompts automatically. It is especially
+  useful for optimizing zero-shot or few-shot instructions where small wording
+  changes can materially affect accuracy.
+when_not_to_use: >-
+  Avoid APE for one-off prompts, subjective tasks without reliable scoring, or
+  situations where evaluation data is too small or noisy. It can be wasteful or
+  misleading if the search optimizes benchmark scores at the expense of
+  robustness, safety, or real user needs.
+claude_notes: >-
+  For Claude, evaluate candidate prompts using clear XML-delimited task inputs,
+  examples, and scoring rubrics to reduce variance. If optimizing reasoning
+  prompts, test whether extended thinking or explicit step-by-step instructions
+  improve outputs, but avoid forcing visible chain-of-thought when concise
+  answers are preferred.
 ---
 # Automatic Prompt Engineer (APE)
 

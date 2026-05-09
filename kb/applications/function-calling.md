@@ -1,15 +1,28 @@
 ---
 id: function-calling
-title: "Function Calling with LLMs"
+title: Function Calling with LLMs
 category: applications
 tags: []
 sources:
-  - https://www.promptingguide.ai/applications/function-calling
+  - 'https://www.promptingguide.ai/applications/function-calling'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use function calling when the model must fetch live/private data, trigger
+  external actions, query databases, or return reliably structured arguments for
+  downstream code. It is especially useful for chatbots, agents, extraction
+  pipelines, and natural-language-to-API workflows.
+when_not_to_use: >-
+  Do not use function calling for simple text-only answers where no external
+  data or action is needed; it adds latency, integration complexity, and failure
+  modes. Avoid giving tools that can perform risky actions unless you have
+  validation, permissions, and human confirmation where appropriate.
+claude_notes: >-
+  Use Claude’s tool use API with clear tool names, precise descriptions, and
+  JSON schemas for parameters; Claude will emit a tool request and should
+  receive a tool_result before producing the final answer. For complex
+  tool-selection tasks, put relevant documents/context before the user query and
+  consider extended thinking if the model must plan across multiple tools.
 ---
 # Function Calling with LLMs
 

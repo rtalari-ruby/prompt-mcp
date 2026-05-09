@@ -1,15 +1,28 @@
 ---
 id: generated-knowledge
-title: "Generated Knowledge Prompting"
+title: Generated Knowledge Prompting
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/techniques/knowledge
+  - 'https://www.promptingguide.ai/techniques/knowledge'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use generated knowledge prompting when a task depends on background facts or
+  commonsense knowledge that the model may not surface reliably in a direct
+  answer. It is most useful for reasoning, classification, and yes/no questions
+  where first generating relevant facts can steer the final prediction.
+when_not_to_use: >-
+  Avoid it when correctness depends on verifiable, up-to-date, or
+  domain-critical facts unless you can check the generated knowledge against
+  trusted sources. It can add overhead and may amplify hallucinations if the
+  model invents plausible but false context.
+claude_notes: >-
+  For Claude, separate stages with XML tags such as <generated_knowledge> and
+  <answer>, and ask Claude to distinguish known facts from uncertain inferences.
+  If using multiple generated knowledge candidates, have Claude evaluate
+  consistency before answering; put the generated knowledge before the final
+  question and keep the requested answer format explicit.
 ---
 # Generated Knowledge Prompting
 

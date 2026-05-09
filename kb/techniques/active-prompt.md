@@ -1,15 +1,28 @@
 ---
 id: active-prompt
-title: "Active-Prompt"
+title: Active-Prompt
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/techniques/activeprompt
+  - 'https://www.promptingguide.ai/techniques/activeprompt'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use Active-Prompt when you have a pool of task-specific questions, a budget
+  for human annotation, and need better few-shot chain-of-thought exemplars than
+  generic examples. It is most useful for high-value tasks where selecting the
+  right examples can materially improve accuracy.
+when_not_to_use: >-
+  Do not use it for one-off prompts, tasks without an unlabeled question pool,
+  or situations where human annotation is unavailable. It may be unnecessary
+  overhead when a strong zero-shot or simple few-shot prompt already performs
+  well.
+claude_notes: >-
+  Use XML tags to separate candidate questions, sampled answers, uncertainty
+  scores, and final annotated exemplars. For Claude, place long task documents
+  or datasets before instructions, and ask for concise reasoning summaries
+  rather than full hidden chain-of-thought unless extended thinking is
+  explicitly needed.
 ---
 # Active-Prompt
 

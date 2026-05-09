@@ -1,15 +1,27 @@
 ---
 id: reflexion
-title: "Reflexion"
+title: Reflexion
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/techniques/reflexion
+  - 'https://www.promptingguide.ai/techniques/reflexion'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use Reflexion for agentic tasks where the model can attempt, receive feedback,
+  reflect, and retry—especially multi-step decision-making, reasoning, coding,
+  or tool-use workflows. It is useful when you want improvement without
+  fine-tuning and can store concise lessons from prior failures as memory.
+when_not_to_use: >-
+  Avoid Reflexion for one-shot tasks, simple requests, or low-latency workflows
+  where extra evaluation and retry loops add unnecessary cost. It is also risky
+  when feedback is unreliable, success cannot be evaluated, or accumulated
+  memories may reinforce wrong assumptions.
+claude_notes: >-
+  Use XML tags to separate <task>, <trajectory>, <evaluation>, <reflection>, and
+  <memory> so Claude can distinguish prior attempts from current instructions.
+  Keep reflections short and actionable, and consider extended thinking for
+  complex evaluation or debugging loops.
 ---
 # Reflexion
 

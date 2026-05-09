@@ -1,15 +1,31 @@
 ---
 id: function-calling
-title: "Function Calling in AI Agents"
+title: Function Calling in AI Agents
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/agents/function-calling
+  - 'https://www.promptingguide.ai/agents/function-calling'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use function calling when the model needs to fetch live data, invoke APIs,
+  query private knowledge bases, or take external actions rather than only
+  generate text. It is especially useful for agent workflows where the model
+  must choose tools, pass structured arguments, inspect results, and continue
+  iterating.
+when_not_to_use: >-
+  Do not use function calling for simple static responses, purely creative
+  writing, or tasks the model can answer from the provided context without
+  external actions. Avoid exposing many broad or poorly described tools, because
+  tool definitions add token cost and can cause incorrect tool selection or
+  unsafe actions.
+claude_notes: >-
+  For Claude, define tools with concise names, precise descriptions, and clear
+  JSON schemas; descriptions should say when to use and when not to use each
+  tool. Put documents or large reference context before the user query when
+  relevant, and use XML tags to separate tool instructions, policies, and data.
+  For complex multi-step agents, consider enabling extended thinking and inspect
+  tool-use traces to debug bad tool choice or arguments.
 ---
 # Function Calling in AI Agents
 

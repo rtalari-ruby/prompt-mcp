@@ -1,15 +1,30 @@
 ---
 id: deep-agents
-title: "Deep Agents"
+title: Deep Agents
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/agents/deep-agents
+  - 'https://www.promptingguide.ai/agents/deep-agents'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use deep agents for long-horizon, multi-step work such as deep research,
+  complex coding, customer support over large knowledge bases, or workflows
+  requiring planning, memory, tool use, delegation, and verification. They are
+  most useful when tasks benefit from specialized sub-agents, persistent
+  context, and recoverable plans rather than a single one-shot response.
+when_not_to_use: >-
+  Do not use deep agents for simple Q&A, short transformations, low-risk
+  summarization, or tasks that fit comfortably in one prompt-response cycle. The
+  added orchestration, memory, retrieval, and verification layers can increase
+  latency, cost, and failure modes if the task is straightforward or poorly
+  specified.
+claude_notes: >-
+  For Claude, use explicit XML-tagged sections for goals, plans, tools, memory
+  rules, sub-agent responsibilities, and verification criteria. Put long
+  documents or retrieved context before instructions when possible, and consider
+  extended thinking for planning-heavy tasks; in Claude Code, use sub-agents and
+  planning deliberately to manage context and separation of concerns.
 ---
 # Deep Agents
 

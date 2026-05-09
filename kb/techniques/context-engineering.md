@@ -1,15 +1,29 @@
 ---
 id: context-engineering
-title: "Why Context Engineering?"
+title: Why Context Engineering?
 category: techniques
 tags: []
 sources:
-  - https://www.promptingguide.ai/agents/context-engineering
+  - 'https://www.promptingguide.ai/agents/context-engineering'
 scraped_from: dair-ai/Prompt-Engineering-Guide
 scraped_sha: 57673726396dd94acb23bdb1e67f27c78ee85a8e
-when_to_use: TODO (run scripts/enrich-kb.ts to fill)
-when_not_to_use: TODO
-claude_notes: TODO
+when_to_use: >-
+  Use context engineering when building multi-step agents or workflows where
+  reliability depends on explicit instructions, tool-use rules, state tracking,
+  and error handling. It is especially valuable when observed agent behavior is
+  inconsistent, hard to debug, or requires a balance between autonomy and
+  constraints.
+when_not_to_use: >-
+  Do not over-invest in context engineering for simple one-off prompts or
+  low-risk tasks where a direct instruction is sufficient. Avoid excessive
+  constraints that make the agent brittle, prevent reasonable consolidation, or
+  increase token cost without improving outcomes.
+claude_notes: >-
+  For Claude, structure layered context with clear XML tags such as <role>,
+  <task_rules>, <tools>, <state>, and <output_format>. Put long documents or
+  task data before instructions when using document-first ordering, and consider
+  asking Claude to explicitly justify skipped steps or tool decisions for better
+  observability.
 ---
 # Why Context Engineering?
 
