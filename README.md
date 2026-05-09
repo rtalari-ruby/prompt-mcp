@@ -1,111 +1,154 @@
 # prompt-mcp
 
-A personal MCP server that exposes 8 surgical, Claude-native prompting commands behind `/prompt:*` in Claude Code.
+8 Claude-native prompting commands behind a local MCP server. Use it from Claude Code (CLI or IDE) to scaffold, improve, critique, eval, and chain prompts — without leaving your editor.
 
-The server's tool prompts are tailored for Claude (XML tags, prefilling, extended thinking, document-first ordering). The internal LLM that powers `scaffold`/`improve`/`critique`/etc. runs against **Azure OpenAI gpt-5.5** by default — swap to Anthropic by editing `src/llm/client.ts` if you prefer.
+> **Stack:** TypeScript MCP server (stdio), Azure OpenAI gpt-5.5 for the LLM-backed tools, 55-file local knowledge base.
 
-## Quickstart
+---
+
+## Activate (3 steps, ~2 minutes)
+
+### 1. Build (one-time)
 
 ```bash
-git clone <this repo>
-cd prompt-mcp
+cd /Users/rahulraju93/Documents/GitHub/prompt-mcp
 npm install
-cp .env.example .env   # fill in AZURE_OPENAI_* (or ANTHROPIC_*)
 npm run build
 ```
 
-Then add this entry to `~/.claude.json` under `mcpServers`:
+You should see `dist/server.js`.
+
+### 2. Tell Claude Code about the server
+
+Open `~/.claude.json` and add this entry under `mcpServers` (create the field if it doesn't exist):
 
 ```json
 {
   "mcpServers": {
     "prompt": {
       "command": "node",
-      "args": ["/Users/you/path/to/prompt-mcp/dist/server.js"]
+      "args": ["/Users/rahulraju93/Documents/GitHub/prompt-mcp/dist/server.js"]
     }
   }
 }
 ```
 
-Restart Claude Code. The 8 tools appear as `/prompt:scaffold_prompt`, `/prompt:improve_prompt`, etc.
+The server reads its API key from `prompt-mcp/.env` (already configured, gitignored). You don't need to put the key in `~/.claude.json`.
 
-> **Secrets** live in `.env` (gitignored). The server's `loadEnv()` reads it on startup, so you don't need to put keys in `.mcp.json`.
+### 3. Restart Claude Code
 
-## The 8 tools
+Quit and re-launch (or `claude --reset` if you have a session open). Verify:
 
-| Slash | Tool | Purpose |
-|---|---|---|
-| `/prompt:scaffold_prompt` | `scaffold_prompt` | Generate a Claude-native prompt from a one-line task. |
-| `/prompt:improve_prompt` | `improve_prompt` | Rewrite a prompt against best practices. |
-| `/prompt:critique_prompt` | `critique_prompt` | Static + LLM review against the prompt-review checklist. |
-| `/prompt:apply_technique` | `apply_technique` | Apply: cot, few-shot, react, tot, self-consistency, prompt-chaining, rag, prefill, extended-thinking, xml-tags. |
-| `/prompt:generate_examples` | `generate_examples` | Generate multishot examples (with edge + negative). |
-| `/prompt:build_eval` | `build_eval` | Build a 6–20 case eval suite with rubric. |
-| `/prompt:design_chain` | `design_chain` | Decompose a task into a multi-step prompt chain. |
-| `/prompt:explain_concept` | `explain_concept` | KB lookup: TL;DR, when to use, Claude notes, pattern, example. |
-
-## Knowledge base
-
-Sources:
-- [dair-ai/Prompt-Engineering-Guide](https://github.com/dair-ai/Prompt-Engineering-Guide) — academic taxonomy.
-- [Anthropic prompt-engineering docs](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/) — the master "claude-prompting-best-practices" doc.
-- Hand-written reference cards under `kb/claude-specific/`, `kb/failure-modes/`, `kb/checklists/`.
-
-Re-scrape (no LLM):
-
-```bash
-npm run scrape          # dair-ai + anthropic
+```
+/mcp
 ```
 
-Optional LLM enrichment (fills `when_to_use` / `claude_notes` for files still marked TODO):
+You should see `prompt` listed with status **connected** and 8 tools.
 
-```bash
-npx tsx scripts/enrich-kb.ts
-```
+---
 
-Run quarterly. Output is committed to `kb/`.
+## Use it
 
-## Development
+You can drive the tools two ways. Both work; pick whichever feels natural.
 
-```bash
-npm run dev             # tsx run, no build
-npm run build           # tsc → dist/
-npm test                # build + smoke
-npx tsx scripts/smoke/run-all.ts       # MCP server lists 8 tools
-npx tsx scripts/smoke/kb.ts            # KB index works
-npx tsx scripts/smoke/technique.ts     # all 10 transforms work
-npx tsx scripts/smoke/llm-tools.ts     # critique → examples → scaffold → improve → eval → chain (live LLM)
-```
+### A. Natural language (recommended)
 
-LLM responses are cached on disk under `.cache/llm/`. Identical inputs reuse the cached answer. Delete the directory to force re-runs.
+Just describe what you want. Claude routes to the right tool.
 
-## Cost & latency
+> "Scaffold me a prompt that extracts product attributes from a PDP and returns JSON."
 
-- Tools without LLM (`explain_concept`, `apply_technique`): instant, free.
-- Single-LLM tools (`critique_prompt`, `generate_examples`, `improve_prompt`): ~5–20s on gpt-5.5 (reasoning model).
-- Heavy tools (`scaffold_prompt`, `design_chain`): ~20–40s.
-- After first call, cache hits are instant.
+> "Critique this prompt: `Analyze this and improve it.`"
 
-## Project structure
+> "Explain extended-thinking from the prompt KB."
+
+### B. Direct tool call
+
+If you want to be explicit, name the tool. Claude Code exposes MCP tools as `mcp__prompt__<tool>`:
+
+> "Run `mcp__prompt__scaffold_prompt` with task='extract product attributes' and output_format='json'."
+
+---
+
+## The 8 tools at a glance
+
+| Tool | What it does | Has LLM | Latency |
+|---|---|---|---|
+| `scaffold_prompt` | One-line task → full Claude-native prompt with XML tags, examples slot, output contract. | yes | ~25s |
+| `improve_prompt` | Existing prompt → critiqued + rewritten with rationale. | yes | ~20s |
+| `critique_prompt` | Static lint + LLM checklist review. | yes | ~10s |
+| `apply_technique` | Apply one of: `cot`, `few-shot`, `react`, `tot`, `self-consistency`, `prompt-chaining`, `rag`, `prefill`, `extended-thinking`, `xml-tags`. Pure transform. | no | instant |
+| `generate_examples` | n multishot examples (with edge + negative cases) as XML. | yes | ~6s |
+| `build_eval` | 6–20 case eval suite + rubric + YAML. | yes | ~15s |
+| `design_chain` | Complex task → 2–10 step prompt chain with mermaid diagram. | yes | ~35s |
+| `explain_concept` | KB lookup. TL;DR, when to use, Claude notes, pattern, example. | no | instant |
+
+See **[EXAMPLES.md](./EXAMPLES.md)** for a worked example of each.
+
+---
+
+## Common workflows
+
+| Goal | Tools, in order |
+|---|---|
+| Build a prompt from scratch | `scaffold_prompt` → `generate_examples` → `critique_prompt` |
+| Fix a flaky prompt | `critique_prompt` → `improve_prompt` |
+| Ship a prompt to production | `scaffold_prompt` → `improve_prompt` → `build_eval` |
+| Decompose a hard task | `design_chain` → `scaffold_prompt` per step |
+| Look up a technique | `explain_concept` |
+| Quick structure fix | `apply_technique` (cot, xml-tags, prefill) |
+
+---
+
+## Troubleshooting
+
+**Tools don't show up after restart**
+- Run `/mcp` in Claude Code. If `prompt` is missing, the path in `~/.claude.json` is wrong or `dist/server.js` doesn't exist. Run `npm run build`.
+- If status is **failed**, run the server manually: `node /Users/rahulraju93/Documents/GitHub/prompt-mcp/dist/server.js < /dev/null` — it should print `prompt-mcp ready (8 tools)` to stderr and hang. If it errors, the message tells you what's wrong.
+
+**LLM-backed tools return "LLM not configured"**
+- The server can't read `.env`. Make sure `prompt-mcp/.env` exists with `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`. Compare against `.env.example`.
+
+**Tool calls feel slow on first run**
+- Expected. gpt-5.5 is a reasoning model. After the first run, identical inputs hit the disk cache (`.cache/llm/`) and return instantly.
+
+**KB content is stale**
+- `npm run scrape` re-pulls dair-ai and Anthropic docs.
+- `npx tsx scripts/enrich-kb.ts` re-fills any TODO frontmatter via LLM.
+
+---
+
+## Cost & limits
+
+- KB tools (`explain_concept`, `apply_technique`): free, instant.
+- LLM tools: ~$0.005–$0.05 per call against gpt-5.5. Cached on disk, so iterative runs are free.
+- Heaviest tool (`design_chain`): ~$0.10 worst case.
+
+---
+
+## Project layout
 
 ```
 prompt-mcp/
-├── src/
-│   ├── server.ts              # MCP entry; stdio transport
-│   ├── tools/                 # 8 tool implementations
-│   ├── kb/                    # loader + in-memory index
-│   └── llm/                   # client + env loader
-├── kb/                        # knowledge base (Markdown, frontmatter)
-│   ├── techniques/            # CoT, few-shot, ReAct, ToT, RAG, ...
-│   ├── claude-specific/       # XML tags, prefilling, extended thinking, ...
-│   ├── failure-modes/         # vague instructions, missing contract, ...
-│   ├── checklists/            # prompt-review, eval-design
-│   ├── applications/          # coding, function-calling, ...
-│   └── risks/                 # adversarial, biases, factuality
-├── scripts/
-│   ├── scrape-dair-ai.ts      # one-shot scraper
-│   ├── scrape-anthropic.ts    # one-shot scraper
-│   ├── enrich-kb.ts           # LLM enrichment pass
-│   └── smoke/                 # smoke tests per phase
-└── .mcp.json                  # ready-to-copy Claude Code snippet
+├── src/server.ts           # MCP entry (stdio)
+├── src/tools/              # 8 tool implementations
+├── src/kb/                 # loader + in-memory index
+├── src/llm/                # Azure OpenAI client + .env loader
+├── kb/                     # 55 markdown files (techniques, claude-specific, failure-modes, ...)
+├── scripts/scrape-*.ts     # one-shot KB scrapers
+├── scripts/enrich-kb.ts    # LLM-fill TODO frontmatter
+├── scripts/smoke/          # phase tests
+└── .mcp.json               # ready-to-copy snippet
 ```
+
+Smoke tests (run any time):
+
+```bash
+npx tsx scripts/smoke/run-all.ts       # MCP server lists 8 tools
+npx tsx scripts/smoke/kb.ts            # KB index works
+npx tsx scripts/smoke/technique.ts     # 10 transforms
+npx tsx scripts/smoke/llm-tools.ts     # all 6 LLM tools (uses cache after first run)
+```
+
+---
+
+See **[EXAMPLES.md](./EXAMPLES.md)** for end-to-end usage walk-throughs.
