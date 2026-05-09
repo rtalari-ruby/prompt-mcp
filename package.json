@@ -1,0 +1,32 @@
+{
+  "name": "prompt-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/server.js",
+  "bin": {
+    "prompt-mcp": "dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts",
+    "scrape:dair-ai": "tsx scripts/scrape-dair-ai.ts",
+    "scrape:anthropic": "tsx scripts/scrape-anthropic.ts",
+    "scrape": "npm run scrape:dair-ai && npm run scrape:anthropic",
+    "smoke": "tsx scripts/smoke/run-all.ts",
+    "test": "npm run build && npm run smoke"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.95.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "cheerio": "^1.2.0",
+    "gray-matter": "^4.0.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}

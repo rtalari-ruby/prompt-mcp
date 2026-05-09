@@ -1,0 +1,12 @@
+{
+  "_comment": "Copy this snippet into your Claude Code mcpServers config (~/.claude.json) or use it as a project .mcp.json. Adjust the absolute path and ANTHROPIC_API_KEY.",
+  "mcpServers": {
+    "prompt": {
+      "command": "node",
+      "args": ["/Users/rahulraju93/Documents/GitHub/prompt-mcp/dist/server.js"],
+      "env": {
+        "ANTHROPIC_API_KEY": "REPLACE_ME"
+      }
+    }
+  }
+}
