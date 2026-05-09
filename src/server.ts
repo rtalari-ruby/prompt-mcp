@@ -3,6 +3,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
+import { loadEnv } from "./llm/env.js";
+loadEnv();
+
 import { scaffoldPromptTool } from "./tools/scaffold.js";
 import { improvePromptTool } from "./tools/improve.js";
 import { critiquePromptTool } from "./tools/critique.js";
