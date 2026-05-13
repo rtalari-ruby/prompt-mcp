@@ -1,11 +1,11 @@
 {
   "_comment_1": "Project-local Claude Code MCP config. Server reads .env from the project root automatically.",
-  "_comment_2": "To use globally, copy this entry into ~/.claude.json under mcpServers.",
-  "_comment_3": "Make sure to run `npm run build` first so dist/server.js exists.",
+  "_comment_2": "Replace the absolute path below with the path to your local clone.",
+  "_comment_3": "Run `npm run build` first so dist/server.js exists.",
   "mcpServers": {
     "prompt": {
       "command": "node",
-      "args": ["/Users/rahulraju93/Documents/GitHub/prompt-mcp/dist/server.js"]
+      "args": ["<ABSOLUTE_PATH_TO_REPO>/dist/server.js"]
     }
   }
 }

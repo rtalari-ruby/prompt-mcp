@@ -7,7 +7,7 @@ The default setup uses **stdio** (local subprocess). Claude Code and Claude Desk
 ## 1. Run the HTTP server
 
 ```bash
-cd /Users/rahulraju93/Documents/GitHub/prompt-mcp
+cd <your-clone-of-prompt-mcp>
 npm run build
 npm run start:http
 ```
@@ -15,7 +15,7 @@ npm run start:http
 Output:
 ```
 prompt-mcp ready (8 tools, http) http://127.0.0.1:3000/mcp
-auth: Bearer 0b7f…d842 (set via PROMPT_MCP_TOKEN)
+auth: Bearer abcd…wxyz (set via PROMPT_MCP_TOKEN)
 ```
 
 Required env (already in your `.env`):
@@ -118,13 +118,13 @@ Same model as Claude Code. Edit `~/Library/Application Support/Claude/claude_des
   "mcpServers": {
     "prompt": {
       "command": "node",
-      "args": ["/Users/rahulraju93/Documents/GitHub/prompt-mcp/dist/server.js"]
+      "args": ["<absolute-path-to-prompt-mcp>/dist/server.js"]
     }
   }
 }
 ```
 
-This uses stdio, not HTTP. Same as the Claude Code setup — you already have this working there; Claude Desktop would be a copy of the config.
+This uses stdio, not HTTP. Same as the Claude Code setup. If you already added it to Claude Code via `claude mcp add`, Claude Desktop is a manual copy of that same config.
 
 ### 4b. Claude.ai web (Custom Connectors)
 
