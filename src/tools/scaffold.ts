@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { complete, llmConfigured, extractJson, LlmError } from "../llm/client.js";
+import { complete, llmAvailable, extractJson, LlmError, type SamplingExtra } from "../llm/client.js";
 
 const inputSchema = {
   task: z.string().describe("One-line task description for the prompt to handle."),
@@ -95,13 +95,16 @@ export const scaffoldPromptTool = {
   description:
     "Generate a structured prompt from a one-line task description, applying Claude's best practices (XML tags, role, examples, output contract).",
   inputSchema,
-  async handler(input: {
-    task: string;
-    inputs?: string[];
-    output_format?: string;
-    model_hint?: string;
-    techniques?: string[];
-  }) {
+  async handler(
+    input: {
+      task: string;
+      inputs?: string[];
+      output_format?: string;
+      model_hint?: string;
+      techniques?: string[];
+    },
+    extra?: SamplingExtra,
+  ) {
     const task = String(input.task ?? "").trim();
     if (!task) {
       return {
@@ -109,17 +112,18 @@ export const scaffoldPromptTool = {
         structured: {},
       };
     }
-    if (!llmConfigured()) {
+    if (!llmAvailable(extra)) {
       return {
         markdown:
-          "Cannot scaffold: LLM is not configured. Set AZURE_OPENAI_* in `.env`.",
-        structured: { error: "llm_not_configured" },
+          "Cannot scaffold: no sampling-capable host (Claude Code / Desktop) and no AZURE_OPENAI_* in `.env`.",
+        structured: { error: "llm_not_available" },
       };
     }
     try {
       const out = await complete(SYSTEM, buildUser(input), {
         maxTokens: 8192,
         cacheKey: `scaffold:${JSON.stringify(input)}`,
+        extra,
       });
       const s = extractJson<Scaffold>(out);
       return {

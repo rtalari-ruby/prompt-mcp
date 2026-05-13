@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { complete, llmConfigured, extractJson, LlmError } from "../llm/client.js";
+import { complete, llmAvailable, extractJson, LlmError, type SamplingExtra } from "../llm/client.js";
 
 const inputSchema = {
   prompt: z.string().describe("The prompt to build an eval suite for."),
@@ -119,24 +119,28 @@ export const buildEvalTool = {
   description:
     "Generate a 10–20 case eval set (rubric + cases YAML) for a prompt, covering happy path, edge, adversarial, and ambiguous inputs.",
   inputSchema,
-  async handler(input: { prompt: string; n_cases?: number; metric?: "exact_match" | "rubric" | "llm_judge" }) {
+  async handler(
+    input: { prompt: string; n_cases?: number; metric?: "exact_match" | "rubric" | "llm_judge" },
+    extra?: SamplingExtra,
+  ) {
     const prompt = String(input.prompt ?? "").trim();
     if (!prompt) {
       return { markdown: "Pass a `prompt` string.", structured: {} };
     }
     const n = input.n_cases ?? 12;
     const metric = input.metric ?? "rubric";
-    if (!llmConfigured()) {
+    if (!llmAvailable(extra)) {
       return {
         markdown:
-          "Cannot build eval: LLM is not configured. Set AZURE_OPENAI_* in `.env`.",
-        structured: { error: "llm_not_configured" },
+          "Cannot build eval: no sampling-capable host (Claude Code / Desktop) and no AZURE_OPENAI_* in `.env`.",
+        structured: { error: "llm_not_available" },
       };
     }
     try {
       const out = await complete(SYSTEM, buildUser(prompt, n, metric), {
         maxTokens: 8192,
         cacheKey: `eval:${prompt}:${n}:${metric}`,
+        extra,
       });
       const suite = extractJson<EvalSuite>(out);
       return { markdown: renderSuite(suite), structured: suite };

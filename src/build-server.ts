@@ -18,7 +18,15 @@ type ToolModule = {
   title: string;
   description: string;
   inputSchema: z.ZodRawShape;
-  handler: (input: any) => Promise<{ markdown: string; structured?: unknown }>;
+  /**
+   * Tool handler. Receives the parsed input and the MCP request-handler
+   * `extra` so LLM-using tools can request sampling from the host client
+   * (Claude Code / Desktop) instead of needing an external API key.
+   */
+  handler: (
+    input: any,
+    extra?: any,
+  ) => Promise<{ markdown: string; structured?: unknown }>;
 };
 
 export const TOOLS: ToolModule[] = [
@@ -46,8 +54,8 @@ export function buildServer(): McpServer {
         description: tool.description,
         inputSchema: tool.inputSchema,
       },
-      async (input: any) => {
-        const result = await tool.handler(input ?? {});
+      async (input: any, extra: any) => {
+        const result = await tool.handler(input ?? {}, extra);
         return {
           content: [{ type: "text", text: result.markdown }],
           structuredContent: result.structured

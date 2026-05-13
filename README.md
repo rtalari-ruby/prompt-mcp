@@ -2,19 +2,25 @@
 
 A local MCP server that gives Claude 8 Claude-native prompt-engineering tools — scaffold, improve, critique, eval, chain, generate examples, apply techniques, look up concepts — backed by a 55-file knowledge base curated from [dair-ai/Prompt-Engineering-Guide](https://github.com/dair-ai/Prompt-Engineering-Guide) and [Anthropic's prompt engineering docs](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/).
 
-Use it from **Claude Code**, **Claude Desktop**, or **claude.ai web** (with one extra hop). One install, all three surfaces.
+**No API key required** by default. The tools use **MCP sampling** to call back into the same Claude that's running your session (Claude Code or Desktop). Optional Azure OpenAI fallback for environments that don't support sampling.
 
 ```text
   ┌──────────────────────┐         ┌─────────────────────┐
-  │ Claude Code (CLI)    │ stdio  │                     │
-  │ Claude Desktop       ├────────▶│   prompt-mcp        │──▶  Azure OpenAI gpt-5.5
-  │ MCP Inspector        │         │   (Node, local)     │     (or Anthropic — your choice)
-  └──────────────────────┘         │                     │
-                                   │   8 tools           │
-  ┌──────────────────────┐ HTTPS   │   55-file KB        │
-  │ claude.ai web        ├────────▶│                     │
-  │ (via ngrok + OAuth)  │         └─────────────────────┘
-  └──────────────────────┘
+  │ Claude Code          │  stdio  │                     │  sampling/createMessage
+  │ Claude Desktop       │◀────────│   prompt-mcp        │◀──────────┐
+  └─────┬────────────────┘         │   (Node, local)     │           │
+        │                          │                     │           │
+        │ user says "scaffold a    │   8 tools           │           │
+        │ prompt for..."           │   55-file KB        │           │
+        ▼                          └─────────────────────┘           │
+   tool call ─────────────────────────────────────────────────────────┘
+   (the tool asks the host Claude to do the LLM work — zero extra cost)
+
+
+  optional, only when sampling isn't available:
+                                   ┌─────────────────────┐
+                                   │   prompt-mcp        │──▶  Azure OpenAI gpt-5.5
+                                   └─────────────────────┘     (your key)
 ```
 
 ---
@@ -55,33 +61,11 @@ npm install
 npm run build
 ```
 
-### 2. Configure your LLM provider
+That's it for the default flow. **No `.env` setup needed** — the tools will use your running Claude session via MCP sampling. Skip to step 2.
 
-Copy `.env.example` to `.env` and fill in one provider. The default is Azure OpenAI; Anthropic also works.
+### 2. Wire into your Claude client — pick one
 
-```bash
-cp .env.example .env
-```
-
-Edit `.env`:
-
-```bash
-# --- Option A: Azure OpenAI (default) ---
-LLM_PROVIDER=azure-openai
-AZURE_OPENAI_ENDPOINT=https://YOUR-RESOURCE.cognitiveservices.azure.com/
-AZURE_OPENAI_API_KEY=...
-AZURE_OPENAI_DEPLOYMENT=gpt-5.5-3            # whatever your deployment is named
-AZURE_OPENAI_API_VERSION=2024-12-01-preview
-
-# --- Option B: HTTP server only (skip if stdio-only) ---
-PROMPT_MCP_TOKEN=                            # openssl rand -hex 24
-```
-
-> **Anthropic instead?** The current client (`src/llm/client.ts`) calls Azure's Chat Completions API. Swap in `@anthropic-ai/sdk` (~20 lines of code) to use `claude-sonnet-4-6` / `claude-opus-4-7` directly. PRs welcome.
-
-### 3. Wire into your Claude client — pick one
-
-#### A. Claude Code (CLI / VS Code)
+### A. Claude Code (CLI / VS Code)
 
 One command:
 
@@ -98,7 +82,7 @@ claude mcp list
 
 The tools are available in every project from now on. Restart any open Claude Code sessions to pick them up.
 
-#### B. Claude Desktop (macOS chat app)
+### B. Claude Desktop (macOS chat app)
 
 Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (create it if it doesn't exist):
 
@@ -115,7 +99,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (create i
 
 Restart Claude Desktop. The tools appear in the slash-command palette.
 
-#### C. claude.ai web (browser chat)
+### C. claude.ai web (browser chat)
 
 Requires the HTTP transport and an OAuth wrapper — see [REMOTE.md](./REMOTE.md). For most users, Claude Desktop is the easier path and identical experience.
 
@@ -181,21 +165,45 @@ Add your own technique? Drop a `kb/<category>/your-technique.md` with frontmatte
 
 ---
 
-## Provider setup
+## How the LLM tools get their model
 
-Default: Azure OpenAI `gpt-5.5` deployment. The client is ~150 lines (`src/llm/client.ts`), uses `fetch` directly, has a disk cache (`.cache/llm/`).
+Two backends, chosen automatically at call time:
 
-Cost per call:
-- KB tools (`explain_concept`, `apply_technique`): free, instant.
-- Single-call tools (`critique_prompt`, `generate_examples`, `improve_prompt`): ~$0.005–$0.05.
-- Heavy tools (`scaffold_prompt`, `design_chain`): up to ~$0.10.
+### Default: MCP sampling (no setup, no key)
+
+When a tool runs inside Claude Code or Claude Desktop, it calls `sampling/createMessage` back through the MCP transport. The host Claude does the LLM work using whichever model your session is running. The tool gets the response and renders it.
+
+- **Cost:** counted against your existing Claude subscription. No separate API spend.
+- **Key:** none required.
+- **Model:** whatever you're running in the session (Opus / Sonnet / Haiku).
+- **UX note:** the host may show a one-time approval per session ("the prompt server wants to ask Claude to do X — allow?"). Approve once; it remembers.
+
+### Fallback: Azure OpenAI (or any chat-completions API)
+
+For environments without sampling support (HTTP server hit directly, scripts like `enrich-kb.ts`, future raw MCP clients), the server falls back to whatever's configured in `.env`:
+
+```bash
+LLM_PROVIDER=azure-openai
+AZURE_OPENAI_ENDPOINT=https://YOUR-RESOURCE.cognitiveservices.azure.com/
+AZURE_OPENAI_API_KEY=...
+AZURE_OPENAI_DEPLOYMENT=gpt-5.5-3
+AZURE_OPENAI_API_VERSION=2024-12-01-preview
+```
+
+The Azure backend uses the chat-completions REST API directly via `fetch` — no SDK, no provider abstraction.
+
+### Cost (only applies to the fallback path)
+
+- KB tools (`explain_concept`, `apply_technique`): free, instant either way.
+- Single-call LLM tools: ~$0.005–$0.05 per call on `gpt-5.5`.
+- Heavy LLM tools: up to ~$0.10.
 - All disk-cached on inputs — re-runs are free.
 
-Personal heavy use: under $20/month.
+When using sampling, your tool calls show up in your Claude usage instead. No new bill.
 
-### Using Anthropic instead
+### Using Anthropic for the fallback
 
-Replace `src/llm/client.ts` (~150 lines). Keep the same `chat(messages, opts)` signature. Wire `@anthropic-ai/sdk`'s `messages.create()` underneath. Everything downstream (the 6 LLM-backed tools) is provider-agnostic.
+Replace `src/llm/client.ts` (~150 lines). Keep the same `chat(messages, opts)` signature. Wire `@anthropic-ai/sdk`'s `messages.create()` underneath. Everything downstream is provider-agnostic.
 
 ---
 
@@ -204,8 +212,9 @@ Replace `src/llm/client.ts` (~150 lines). Keep the same `chat(messages, opts)` s
 | Problem | Cause / Fix |
 |---|---|
 | `/mcp` doesn't show `prompt` | Server failed to start. Run `node dist/server.js < /dev/null` manually — it should print `prompt-mcp ready (8 tools, stdio)` to stderr. Errors will tell you what's missing. |
-| "LLM not configured" | The server can't read `.env`. Check `AZURE_OPENAI_*` vars are present. Restart Claude Code/Desktop. |
-| First LLM call is slow | Expected. `gpt-5.5` is a reasoning model: 5–40s. Subsequent identical calls hit the disk cache and return instantly. |
+| "no sampling-capable host and no AZURE_OPENAI_* in env" | Your MCP client doesn't support sampling AND you haven't set up the Azure fallback. Either upgrade Claude Code/Desktop, or add `AZURE_OPENAI_*` to `.env`. |
+| Sampling permission prompt every call | Some hosts ask once per session, some ask each time. Look in your Claude Code settings for a "trust this MCP server's sampling" toggle. |
+| First LLM call is slow | Expected. The host's reasoning model can take 5–40s on heavy tools. Subsequent identical calls hit the disk cache and return instantly. |
 | Tool returns JSON-parse error | Rare. The model occasionally wraps JSON in prose. Just re-run — the cache misses on the next phrasing. |
 | Want to clear the cache | `rm -rf .cache/llm`. Next runs will hit the LLM fresh. |
 | KB changed but server doesn't see it | Restart Claude Code/Desktop. The KB loads once at startup. |

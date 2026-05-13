@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { complete, llmConfigured, extractJson, LlmError } from "../llm/client.js";
+import { complete, llmAvailable, extractJson, LlmError, type SamplingExtra } from "../llm/client.js";
 
 const inputSchema = {
   task: z.string().describe("Task description for which to generate examples."),
@@ -73,12 +73,15 @@ export const generateExamplesTool = {
   description:
     "Generate 3–5 multishot examples for a given task, including edge cases and negative examples, formatted in XML.",
   inputSchema,
-  async handler(input: {
-    task: string;
-    n?: number;
-    include_edge_case?: boolean;
-    include_negative?: boolean;
-  }) {
+  async handler(
+    input: {
+      task: string;
+      n?: number;
+      include_edge_case?: boolean;
+      include_negative?: boolean;
+    },
+    extra?: SamplingExtra,
+  ) {
     const task = String(input.task ?? "").trim();
     if (!task) {
       return { markdown: "Pass a `task` string.", structured: { examples: [] } };
@@ -87,18 +90,22 @@ export const generateExamplesTool = {
     const includeEdge = input.include_edge_case !== false;
     const includeNeg = input.include_negative !== false;
 
-    if (!llmConfigured()) {
+    if (!llmAvailable(extra)) {
       return {
         markdown:
-          "Cannot generate examples: LLM is not configured. Set AZURE_OPENAI_* in `.env`.",
-        structured: { examples: [], error: "llm_not_configured" },
+          "Cannot generate examples: no sampling-capable host (Claude Code / Desktop) and no AZURE_OPENAI_* in `.env`.",
+        structured: { examples: [], error: "llm_not_available" },
       };
     }
     try {
       const out = await complete(
         SYSTEM,
         buildUser(task, n, includeEdge, includeNeg),
-        { maxTokens: 4096, cacheKey: `examples:${task}:${n}:${includeEdge}:${includeNeg}` },
+        {
+          maxTokens: 4096,
+          cacheKey: `examples:${task}:${n}:${includeEdge}:${includeNeg}`,
+          extra,
+        },
       );
       const parsed = extractJson<{ examples: Example[] }>(out);
       const examples = parsed.examples ?? [];

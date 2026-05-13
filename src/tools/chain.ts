@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { complete, llmConfigured, extractJson, LlmError } from "../llm/client.js";
+import { complete, llmAvailable, extractJson, LlmError, type SamplingExtra } from "../llm/client.js";
 
 const inputSchema = {
   task: z.string().describe("Complex task to decompose into a prompt chain."),
@@ -107,14 +107,17 @@ export const designChainTool = {
   description:
     "Decompose a complex task into a multi-step prompt chain, each step with input/output contracts and glue notes.",
   inputSchema,
-  async handler(input: { task: string; max_steps?: number }) {
+  async handler(
+    input: { task: string; max_steps?: number },
+    extra?: SamplingExtra,
+  ) {
     const task = String(input.task ?? "").trim();
     if (!task) return { markdown: "Pass a `task` string.", structured: {} };
-    if (!llmConfigured()) {
+    if (!llmAvailable(extra)) {
       return {
         markdown:
-          "Cannot design chain: LLM is not configured. Set AZURE_OPENAI_* in `.env`.",
-        structured: { error: "llm_not_configured" },
+          "Cannot design chain: no sampling-capable host (Claude Code / Desktop) and no AZURE_OPENAI_* in `.env`.",
+        structured: { error: "llm_not_available" },
       };
     }
     const maxSteps = input.max_steps ?? 5;
@@ -122,6 +125,7 @@ export const designChainTool = {
       const out = await complete(SYSTEM, buildUser(task, maxSteps), {
         maxTokens: 12000,
         cacheKey: `chain:${task}:${maxSteps}`,
+        extra,
       });
       const plan = extractJson<ChainPlan>(out);
       return { markdown: renderPlan(plan), structured: plan };

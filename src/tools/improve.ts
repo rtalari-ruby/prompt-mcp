@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { complete, llmConfigured, extractJson, LlmError } from "../llm/client.js";
+import { complete, llmAvailable, extractJson, LlmError, type SamplingExtra } from "../llm/client.js";
 import { critiquePromptTool, type Finding } from "./critique.js";
 
 const FOCUS = ["clarity", "structure", "examples", "contract"] as const;
@@ -81,22 +81,25 @@ export const improvePromptTool = {
   description:
     "Rewrite an existing prompt to apply Claude best practices: directness, XML structure, multishot examples, output contract, optional <thinking> wrapping.",
   inputSchema,
-  async handler(input: { prompt: string; focus?: readonly string[] }) {
+  async handler(
+    input: { prompt: string; focus?: readonly string[] },
+    extra?: SamplingExtra,
+  ) {
     const prompt = String(input.prompt ?? "").trim();
     if (!prompt) {
       return { markdown: "Pass a `prompt` string.", structured: {} };
     }
     // Always run critique first — even without LLM (static only).
-    const critique = await critiquePromptTool.handler({ prompt });
+    const critique = await critiquePromptTool.handler({ prompt }, extra);
     const findings: Finding[] = (critique.structured as { findings?: Finding[] })?.findings ?? [];
 
-    if (!llmConfigured()) {
+    if (!llmAvailable(extra)) {
       return {
         markdown:
           `# Improvement (static lint only)\n\n` +
-          `LLM not configured — cannot rewrite. Static findings:\n\n` +
+          `No LLM available — cannot rewrite. Static findings:\n\n` +
           findings.map((f) => `- [${f.severity}] ${f.category}: ${f.finding}`).join("\n"),
-        structured: { findings, error: "llm_not_configured" },
+        structured: { findings, error: "llm_not_available" },
       };
     }
 
@@ -104,6 +107,7 @@ export const improvePromptTool = {
       const out = await complete(SYSTEM, buildUser(prompt, findings, input.focus), {
         maxTokens: 8192,
         cacheKey: `improve:${prompt}:${(input.focus ?? []).join(",")}`,
+        extra,
       });
       const parsed = extractJson<{ after: string; changes_applied: string[]; rationale: string }>(out);
       const impr: Improvement = {

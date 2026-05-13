@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { complete, llmConfigured, extractJson, LlmError } from "../llm/client.js";
+import { complete, llmAvailable, extractJson, LlmError, type SamplingExtra } from "../llm/client.js";
 import { lookup } from "../kb/index.js";
 
 const inputSchema = {
@@ -213,7 +213,7 @@ export const critiquePromptTool = {
   description:
     "Review a prompt against a Claude-aware checklist of failure modes: vague instructions, missing examples or output contract, missing role, ambiguous pronouns, conflicting instructions.",
   inputSchema,
-  async handler(input: { prompt: string }) {
+  async handler(input: { prompt: string }, extra?: SamplingExtra) {
     const prompt = String(input.prompt ?? "").trim();
     if (!prompt) {
       return {
@@ -224,11 +224,12 @@ export const critiquePromptTool = {
     const staticFindings = staticChecks(prompt);
     let llmFindings: Finding[] = [];
     let summary = "";
-    if (llmConfigured()) {
+    if (llmAvailable(extra)) {
       try {
         const out = await complete(SYSTEM, buildUser(prompt, staticFindings), {
           maxTokens: 4096,
           cacheKey: `critique:${prompt}`,
+          extra,
         });
         const parsed = extractJson<{ findings: Finding[]; summary?: string }>(out);
         llmFindings = (parsed.findings ?? []).filter((f) => f && f.severity);
@@ -240,7 +241,7 @@ export const critiquePromptTool = {
       }
     } else {
       summary =
-        "(LLM check skipped: no AZURE_OPENAI_API_KEY in env. Static lint only.)";
+        "(LLM check skipped: no sampling-capable host and no AZURE_OPENAI_* in env. Static lint only.)";
     }
     const allFindings = [...staticFindings, ...llmFindings];
     return {

@@ -1,15 +1,19 @@
-// Minimal LLM client. Single provider — Azure OpenAI Chat Completions —
-// reads config from env and calls the deployment via fetch. The plan was
-// originally Claude-only at the model layer; the user provided an Azure
-// gpt-5.5 deployment, so we use it here. The MCP server is still
-// Claude-Code-facing; only the internal tool prompts run through this client.
+// LLM client with two backends:
 //
-// gpt-5.5 is a reasoning model: reasoning tokens count toward
-// max_completion_tokens. Default budget is generous (8192).
+// 1) MCP sampling (preferred): the server asks the *host* MCP client
+//    (Claude Code, Claude Desktop) to do the completion using whichever
+//    model the user is already running. No API key required.
+//
+// 2) Azure OpenAI chat completions (fallback): used when the host doesn't
+//    support sampling, or when no `extra` request handler is in scope
+//    (e.g. scripts/enrich-kb.ts, which runs outside a tool handler).
+//
+// Both backends share a disk cache keyed on inputs + backend.
 
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
+import { sampleViaClient, type SamplingExtra } from "./sampling.js";
 
 export type ChatMsg = { role: "system" | "user" | "assistant"; content: string };
 
@@ -18,6 +22,12 @@ export type CompletionOptions = {
   maxTokens?: number;
   /** Disk-cache key. If set, identical inputs reuse a cached response. */
   cacheKey?: string;
+  /**
+   * MCP request-handler extra. If present and the host client advertises
+   * sampling capability, the completion runs via the host's LLM (no API
+   * key needed). Otherwise we fall back to Azure.
+   */
+  extra?: SamplingExtra;
 };
 
 export class LlmError extends Error {
@@ -36,9 +46,32 @@ function cfg() {
   };
 }
 
-export function llmConfigured(): boolean {
+export function azureConfigured(): boolean {
   const c = cfg();
   return Boolean(c.endpoint && c.key && c.deployment);
+}
+
+/** True if any backend is usable in the given context. */
+export function llmAvailable(extra?: SamplingExtra): boolean {
+  if (extra && samplingAvailable(extra)) return true;
+  return azureConfigured();
+}
+
+/** Back-compat alias used by scripts that pre-date the sampling backend. */
+export const llmConfigured = azureConfigured;
+
+function samplingAvailable(extra: SamplingExtra): boolean {
+  // The host's capabilities are surfaced via the protocol layer. We check
+  // for the `sampling` capability the client advertised at `initialize`.
+  try {
+    const server: any = (extra as any).server ?? (extra as any).sendRequest?.server;
+    // The simpler path: peek at the in-scope sendRequest. If the client
+    // didn't advertise sampling, the request will fail with method-not-found.
+    // We optimistically attempt sampling and let the catch fall through.
+    return typeof extra.sendRequest === "function";
+  } catch {
+    return false;
+  }
 }
 
 function cachePath(key: string): string {
@@ -62,14 +95,40 @@ function writeCache(key: string, text: string): void {
   writeFileSync(p, JSON.stringify({ text }));
 }
 
-/** Run a chat completion. Returns assistant message content as a string. */
+/** Run a chat completion. Prefers MCP sampling; falls back to Azure. */
 export async function chat(
   messages: ChatMsg[],
   opts: CompletionOptions = {},
 ): Promise<string> {
-  if (!llmConfigured()) {
+  // Try sampling first if we have an `extra` to call back through.
+  if (opts.extra && samplingAvailable(opts.extra)) {
+    const samplingKey =
+      opts.cacheKey != null
+        ? `sample:${opts.cacheKey}`
+        : `sample:${JSON.stringify({ m: messages, t: opts.maxTokens ?? 4096 })}`;
+    const cached = readCache(samplingKey);
+    if (cached !== null) return cached;
+    try {
+      const text = await sampleViaClient(opts.extra, messages, {
+        maxTokens: opts.maxTokens ?? 4096,
+      });
+      writeCache(samplingKey, text);
+      return text;
+    } catch (err) {
+      // If sampling is rejected (e.g. client doesn't actually support it,
+      // or user denied), fall through to Azure if it's configured.
+      if (!azureConfigured()) {
+        throw new LlmError(
+          `Sampling failed and Azure is not configured: ${(err as Error).message}`,
+        );
+      }
+      // else: fall through
+    }
+  }
+
+  if (!azureConfigured()) {
     throw new LlmError(
-      "LLM not configured. Set AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY, AZURE_OPENAI_DEPLOYMENT in .env.",
+      "LLM not configured. Either run inside a sampling-capable MCP client (Claude Code / Desktop), or set AZURE_OPENAI_* in .env.",
     );
   }
   const c = cfg();
@@ -129,6 +188,9 @@ export async function complete(
     opts,
   );
 }
+
+/** Re-export so tools and scripts can type their handlers without reaching into sampling.ts. */
+export type { SamplingExtra } from "./sampling.js";
 
 /** Parse the first ```json ... ``` block, or fall back to JSON.parse on the whole string. */
 export function extractJson<T = unknown>(text: string): T {
