@@ -10,7 +10,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
+    "start:http": "node dist/http-server.js",
     "dev": "tsx src/server.ts",
+    "dev:http": "tsx src/http-server.ts",
     "scrape:dair-ai": "tsx scripts/scrape-dair-ai.ts",
     "scrape:anthropic": "tsx scripts/scrape-anthropic.ts",
     "scrape": "npm run scrape:dair-ai && npm run scrape:anthropic",

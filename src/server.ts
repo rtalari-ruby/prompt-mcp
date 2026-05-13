@@ -1,74 +1,18 @@
 #!/usr/bin/env node
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+// Stdio entry. Used by Claude Code (local subprocess transport).
+// For Claude.ai / Claude Desktop over HTTPS, use http-server.ts instead.
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
 
 import { loadEnv } from "./llm/env.js";
 loadEnv();
 
-import { scaffoldPromptTool } from "./tools/scaffold.js";
-import { improvePromptTool } from "./tools/improve.js";
-import { critiquePromptTool } from "./tools/critique.js";
-import { applyTechniqueTool } from "./tools/technique.js";
-import { generateExamplesTool } from "./tools/examples.js";
-import { buildEvalTool } from "./tools/eval.js";
-import { designChainTool } from "./tools/chain.js";
-import { explainConceptTool } from "./tools/explain.js";
-
-type ToolModule = {
-  name: string;
-  title: string;
-  description: string;
-  inputSchema: z.ZodRawShape;
-  handler: (input: any) => Promise<{ markdown: string; structured?: unknown }>;
-};
-
-const TOOLS: ToolModule[] = [
-  scaffoldPromptTool,
-  improvePromptTool,
-  critiquePromptTool,
-  applyTechniqueTool,
-  generateExamplesTool,
-  buildEvalTool,
-  designChainTool,
-  explainConceptTool,
-];
-
-function buildServer(): McpServer {
-  const server = new McpServer(
-    { name: "prompt-mcp", version: "0.1.0" },
-    { capabilities: { tools: {} } },
-  );
-
-  for (const tool of TOOLS) {
-    server.registerTool(
-      tool.name,
-      {
-        title: tool.title,
-        description: tool.description,
-        inputSchema: tool.inputSchema,
-      },
-      async (input: any) => {
-        const result = await tool.handler(input ?? {});
-        return {
-          content: [{ type: "text", text: result.markdown }],
-          structuredContent: result.structured
-            ? (result.structured as Record<string, unknown>)
-            : undefined,
-        };
-      },
-    );
-  }
-
-  return server;
-}
+import { buildServer, TOOLS } from "./build-server.js";
 
 async function main() {
   const server = buildServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  // Stay alive on stdio. The transport keeps the process running.
-  process.stderr.write(`prompt-mcp ready (${TOOLS.length} tools)\n`);
+  process.stderr.write(`prompt-mcp ready (${TOOLS.length} tools, stdio)\n`);
 }
 
 main().catch((err) => {

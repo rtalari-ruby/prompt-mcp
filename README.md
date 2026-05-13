@@ -152,3 +152,5 @@ npx tsx scripts/smoke/llm-tools.ts     # all 6 LLM tools (uses cache after first
 ---
 
 See **[EXAMPLES.md](./EXAMPLES.md)** for end-to-end usage walk-throughs.
+
+For Claude.ai web / remote access, see **[REMOTE.md](./REMOTE.md)** — covers the HTTP transport, ngrok, and the OAuth path required by claude.ai's Custom Connectors.
