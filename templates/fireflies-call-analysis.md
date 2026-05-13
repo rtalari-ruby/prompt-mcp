@@ -747,17 +747,17 @@ cases:
 
 ## 6. Orchestration chain (from `design_chain`) — the actual workflow
 
-# Prompt chain: Build a workflow that uses the Fireflies MCP connector to fetch all meeting transcripts from 2025-01-01 through 2025-12-31, classifies each as Sales | Customer | Internal | Other, scores Sales and Customer calls across five quality dimensions with concrete per-call action items, and produces a team-rollup with the top systemic gaps and 5 prioritized team-wide action items. Each step has its own narrow contract. Maximum steps: 6. Decompose into the smallest sensible chain.
+# Prompt chain: Build a workflow that uses the Fireflies MCP connector (available in Claude Cowork) to fetch all meeting transcripts from 2025-01-01 through 2026-05-13, classifies each as Sales | Customer | Internal | Other, scores Sales and Customer calls across five quality dimensions with concrete per-call action items, and produces a team-rollup with the top systemic gaps and 5 prioritized team-wide action items. Note: assume the Fireflies MCP is already connected at the runtime — do not include API key fetching, OAuth, or credential setup steps. Each step has its own narrow contract. Maximum steps: 6. Decompose into the smallest sensible chain.
 
 **Steps:** 5
 
 ```mermaid
 flowchart LR
-  S1["1. fetch-fireflies-transcripts<br/>(Fireflies MCP data extraction specialist)"]
+  S1["1. fetch-fireflies-transcripts<br/>(Fireflies MCP transcript retrieval specialist)"]
   S2["2. classify-meetings<br/>(Meeting taxonomy classifier)"]
   S3["3. score-sales-customer-calls<br/>(Call quality evaluator)"]
-  S4["4. aggregate-team-rollup<br/>(Revenue and customer success operations analyst)"]
-  S5["5. verify-and-package<br/>(Workflow quality gate and final report formatter)"]
+  S4["4. synthesize-team-rollup<br/>(Revenue and customer team performance analyst)"]
+  S5["5. final-verify-and-format<br/>(Quality assurance editor and final report formatter)"]
   S1 --> S2
   S2 --> S3
   S3 --> S4
@@ -765,75 +765,75 @@ flowchart LR
 ```
 
 ## Step 1: fetch-fireflies-transcripts
-**Role:** Fireflies MCP data extraction specialist
-**Inputs:** {{date_start}}, {{date_end}}, {{fireflies_mcp_connection}}
+**Role:** Fireflies MCP transcript retrieval specialist
+**Inputs:** {{date_start}}, {{date_end}}
 
 **Prompt:**
 ```
-Use the Fireflies MCP connector to fetch every meeting transcript whose meeting date is between {{date_start}} and {{date_end}}, inclusive. Retrieve all pages until exhausted. For each meeting, return normalized metadata and the full transcript text. Do not classify or score. Preserve Fireflies IDs exactly. If transcript text is unavailable, include the record with transcript_text = null and a fetch_warning. Output only JSON matching the contract.
+Use the Fireflies MCP connector already available in Claude Cowork. Do not perform credential setup, OAuth, or API key retrieval. Fetch every meeting transcript with meeting start datetime from {{date_start}} through {{date_end}}, inclusive. Page through all results until exhausted. For each meeting, retrieve the full transcript when available and normalize metadata. Return only the contracted JSON. Include meetings with missing transcripts, but mark retrieval_status and retrieval_error. Inputs: date_start={{date_start}}, date_end={{date_end}}.
 ```
-**Output contract:** { "date_start": "YYYY-MM-DD", "date_end": "YYYY-MM-DD", "fetch_summary": { "total_records": "integer", "pages_fetched": "integer", "all_pages_exhausted": "boolean", "missing_transcript_count": "integer", "warnings": ["string"] }, "transcripts": [ { "meeting_id": "string", "fireflies_url": "string|null", "title": "string|null", "meeting_date": "YYYY-MM-DD", "start_time": "ISO-8601 string|null", "duration_seconds": "integer|null", "organizer_email": "string|null", "participant_emails": ["string"], "participant_names": ["string"], "summary": "string|null", "transcript_text": "string|null", "fetch_warning": "string|null" } ] }
-**Validator:** Confirm all_pages_exhausted is true; every meeting_date is within the inclusive date range; meeting_id values are unique and non-empty; total_records equals transcripts.length; missing_transcript_count equals the number of null transcript_text values; no classification or scoring fields are present.
-**Glue to next:** Pass the complete transcripts array to the classifier. If the array is large, shard into deterministic batches by meeting_date then meeting_id while preserving the same item schema.
+**Output contract:** JSON object: {date_start: ISO-date string, date_end: ISO-date string, source: 'fireflies_mcp', fetched_at: ISO-datetime string, total_meetings: integer, meetings: array of {meeting_id: string, title: string|null, meeting_datetime: ISO-datetime string, duration_minutes: number|null, organizer: string|null, participants: array of {name: string|null, email: string|null, domain: string|null}, fireflies_url: string|null, transcript_text: string|null, summary: string|null, retrieval_status: 'ok'|'missing_transcript'|'error', retrieval_error: string|null}}
+**Validator:** Check that every meeting_datetime is within the inclusive date range, meeting_id values are unique, total_meetings equals meetings.length, all meetings have retrieval_status, and successful records have non-empty transcript_text. If pagination metadata is available, verify all pages were consumed. Fail if the MCP connector was not used or credentials/setup steps were attempted.
+**Glue to next:** Pass the entire normalized meetings array as {{meetings_json}}. If the array is too large for one context window, batch by meeting_id while preserving a shared manifest of all IDs.
 
 ## Step 2: classify-meetings
 **Role:** Meeting taxonomy classifier
-**Inputs:** {{transcripts}}
+**Inputs:** {{meetings_json}}
 
 **Prompt:**
 ```
-Classify each transcript into exactly one category: Sales, Customer, Internal, or Other. Use meeting title, participants, summary, and transcript text. Definitions: Sales = prospecting, qualification, demo, negotiation, buying committee, expansion sales, or pre-close revenue discussion; Customer = post-sale customer success, onboarding, support, QBR, renewal health, implementation, adoption, or escalation; Internal = primarily employees or contractors discussing internal planning, operations, recruiting, product, engineering, finance, or company updates without an external customer/prospect focus; Other = interviews, vendors, partners, ambiguous external calls, personal calls, or anything that does not fit the other categories. Provide concise evidence and confidence. Do not score quality. Output only JSON matching the contract.
+Classify each meeting in {{meetings_json}} into exactly one category: Sales, Customer, Internal, or Other. Use transcript_text, title, participants, organizer, and summary. Definitions: Sales means prospecting, discovery, demo, negotiation, closing, expansion sales, or revenue acquisition with prospects or buyers. Customer means existing customer success, onboarding, support, renewal health, adoption, QBR, or implementation. Internal means primarily employees or contractors discussing internal operations, planning, hiring, product, engineering, or management. Other means insufficient information or not fitting the first three. Return only the contracted JSON.
 ```
-**Output contract:** { "classified_meetings": [ { "meeting_id": "string", "category": "Sales|Customer|Internal|Other", "confidence": "number from 0 to 1", "evidence": ["string"], "needs_quality_scoring": "boolean" } ], "classification_summary": { "Sales": "integer", "Customer": "integer", "Internal": "integer", "Other": "integer", "low_confidence_count": "integer" } }
-**Validator:** Confirm there is exactly one classification per input meeting_id and no unknown meeting_id values; category is one of the four allowed labels; needs_quality_scoring is true only for Sales or Customer and false otherwise; confidence is between 0 and 1; classification_summary counts match the classified_meetings array.
-**Glue to next:** Join classifications back to the source transcript records by meeting_id. Forward only meetings where needs_quality_scoring is true, including category, metadata, and transcript_text.
+**Output contract:** JSON object: {classified_at: ISO-datetime string, classifications: array of {meeting_id: string, category: 'Sales'|'Customer'|'Internal'|'Other', confidence: number from 0 to 1, rationale: string, evidence: array of strings, ambiguity_notes: string|null}}
+**Validator:** Check that classifications contains exactly one row for every meeting_id in {{meetings_json}}, contains no unknown meeting_ids, category is one of the four allowed labels, confidence is between 0 and 1, and rationale/evidence are non-empty. Flag low-confidence items under 0.6 but still classify them.
+**Glue to next:** Join classifications back to meetings by meeting_id. Pass only meetings classified as Sales or Customer, plus their category labels, as {{scorable_calls_json}}. Preserve all classifications for final counts.
 
 ## Step 3: score-sales-customer-calls
 **Role:** Call quality evaluator
-**Inputs:** {{scorable_meetings}}
+**Inputs:** {{scorable_calls_json}}
 
 **Prompt:**
 ```
-Score each Sales or Customer meeting across exactly five dimensions using the transcript evidence. Dimensions: 1) preparation_and_context, 2) discovery_or_diagnosis, 3) value_and_solution_alignment, 4) communication_and_engagement, 5) next_steps_and_ownership. Use a 1-5 integer score where 1 = poor or absent, 3 = adequate, 5 = excellent. For every dimension, provide evidence and one concrete per-call action item. Also provide an overall_score as the arithmetic mean rounded to one decimal, top_strengths, top_gaps, and a short call_coaching_summary. Do not aggregate across calls. Output only JSON matching the contract.
+Score only the Sales and Customer calls in {{scorable_calls_json}}. Evaluate each call across exactly five quality dimensions using a 1 to 5 integer scale, where 1 is poor, 3 is acceptable, and 5 is excellent. Dimensions: agenda_and_context, customer_understanding, value_solution_alignment, communication_and_listening, next_steps_and_ownership. For each dimension, provide evidence from the transcript and one concrete improvement if score is below 5. For each call, also provide 1 to 3 concrete action items that a rep or account owner can execute, each with owner_role, action, rationale, and priority. Return only the contracted JSON.
 ```
-**Output contract:** { "scored_calls": [ { "meeting_id": "string", "category": "Sales|Customer", "overall_score": "number rounded to 1 decimal", "dimension_scores": { "preparation_and_context": { "score": "integer 1-5", "evidence": ["string"], "action_item": "string" }, "discovery_or_diagnosis": { "score": "integer 1-5", "evidence": ["string"], "action_item": "string" }, "value_and_solution_alignment": { "score": "integer 1-5", "evidence": ["string"], "action_item": "string" }, "communication_and_engagement": { "score": "integer 1-5", "evidence": ["string"], "action_item": "string" }, "next_steps_and_ownership": { "score": "integer 1-5", "evidence": ["string"], "action_item": "string" } }, "top_strengths": ["string"], "top_gaps": ["string"], "call_action_items": ["string"], "call_coaching_summary": "string" } ], "scoring_summary": { "scored_count": "integer", "skipped_count": "integer", "warnings": ["string"] } }
-**Validator:** Confirm every scored_call meeting_id is in the scorable input set; no Internal or Other calls are scored; all five dimensions are present exactly once; all dimension scores are integers from 1 to 5; overall_score equals the mean of the five dimension scores rounded to one decimal; every dimension has non-empty evidence and a non-empty action_item; call_action_items is non-empty.
-**Glue to next:** Pass scored_calls plus the classification_summary and basic meeting metadata to the rollup step. Keep per-call action items available for drilldown but aggregate only systemic patterns.
+**Output contract:** JSON object: {scored_at: ISO-datetime string, rubric_version: string, scored_calls: array of {meeting_id: string, category: 'Sales'|'Customer', overall_score: number from 1 to 5, dimension_scores: {agenda_and_context: {score: integer 1-5, evidence: array of strings, improvement: string|null}, customer_understanding: {score: integer 1-5, evidence: array of strings, improvement: string|null}, value_solution_alignment: {score: integer 1-5, evidence: array of strings, improvement: string|null}, communication_and_listening: {score: integer 1-5, evidence: array of strings, improvement: string|null}, next_steps_and_ownership: {score: integer 1-5, evidence: array of strings, improvement: string|null}}, call_action_items: array of {priority: 'High'|'Medium'|'Low', owner_role: string, action: string, rationale: string}, notable_strengths: array of strings, risk_flags: array of strings}}
+**Validator:** Check that every input Sales or Customer meeting_id appears exactly once unless transcript_text was missing; missing transcript records must be listed in an omitted_calls field if added. Verify each dimension has an integer score 1-5, evidence is grounded in transcript content or metadata, overall_score is the arithmetic mean rounded to one decimal, and each call has 1 to 3 concrete action items with verbs and owner roles.
+**Glue to next:** Pass scored_calls as {{scored_calls_json}} and pass full classification counts as {{classifications_json}} to the rollup step.
 
-## Step 4: aggregate-team-rollup
-**Role:** Revenue and customer success operations analyst
-**Inputs:** {{classified_meetings}}, {{scored_calls}}, {{transcript_metadata}}
-
-**Prompt:**
-```
-Create a team-level rollup from the classified meetings and scored Sales/Customer calls. Identify systemic gaps by looking for recurring low-scoring dimensions, repeated themes in top_gaps, missing next steps, weak discovery or diagnosis, poor value alignment, communication issues, or inconsistent preparation. Produce ranked systemic gaps with supporting statistics and examples. Then produce exactly five prioritized team-wide action items. Prioritize by estimated impact, frequency, urgency, and feasibility. Do not invent facts beyond the scored calls. Output only JSON matching the contract.
-```
-**Output contract:** { "rollup_period": { "date_start": "YYYY-MM-DD", "date_end": "YYYY-MM-DD" }, "volume_summary": { "total_meetings": "integer", "classified_counts": { "Sales": "integer", "Customer": "integer", "Internal": "integer", "Other": "integer" }, "scored_sales_calls": "integer", "scored_customer_calls": "integer" }, "quality_summary": { "overall_average_score": "number|null", "average_by_category": { "Sales": "number|null", "Customer": "number|null" }, "average_by_dimension": { "preparation_and_context": "number|null", "discovery_or_diagnosis": "number|null", "value_and_solution_alignment": "number|null", "communication_and_engagement": "number|null", "next_steps_and_ownership": "number|null" } }, "systemic_gaps": [ { "rank": "integer", "gap": "string", "affected_call_count": "integer", "affected_call_percent": "number", "supporting_dimensions": ["string"], "representative_meeting_ids": ["string"], "evidence_summary": "string", "business_risk": "string" } ], "prioritized_team_action_items": [ { "priority": "integer 1-5", "action_item": "string", "owner_role": "string", "rationale": "string", "expected_impact": "string", "implementation_hint": "string", "success_metric": "string" } ] }
-**Validator:** Confirm classified_counts match classification input; scored_sales_calls and scored_customer_calls match scored_calls by category; average scores are computed from scored_calls only; systemic_gaps are ranked with unique consecutive integers starting at 1; representative_meeting_ids exist in scored_calls; prioritized_team_action_items contains exactly five items with priorities 1 through 5 and no duplicates.
-**Glue to next:** Pass the rollup, scored_calls, classifications, and fetch summary to the final verification and packaging step.
-
-## Step 5: verify-and-package
-**Role:** Workflow quality gate and final report formatter
-**Inputs:** {{fetch_output}}, {{classification_output}}, {{scoring_output}}, {{rollup_output}}, {{date_start}}, {{date_end}}
+## Step 4: synthesize-team-rollup
+**Role:** Revenue and customer team performance analyst
+**Inputs:** {{scored_calls_json}}, {{classifications_json}}
 
 **Prompt:**
 ```
-Verify the entire workflow output for completeness, consistency, and contract compliance. Check that the Fireflies fetch covered {{date_start}} through {{date_end}}, all meetings were classified, only Sales and Customer calls were scored, all scored calls have five dimension scores and concrete per-call action items, and the rollup contains top systemic gaps plus exactly five prioritized team-wide action items. If any blocking issue exists, return status = failed with issues and remediation steps. If valid, return status = passed and package the final deliverable. Output only JSON matching the contract.
+Create a team-level rollup from {{scored_calls_json}} and {{classifications_json}}. Aggregate counts by category, average scores overall and by dimension, identify the top systemic gaps, and produce exactly 5 prioritized team-wide action items. A systemic gap must be supported by repeated evidence across multiple calls or a meaningful score pattern. Prioritize actions by expected customer/revenue impact, frequency of the gap, and ease of implementation. Return only the contracted JSON.
 ```
-**Output contract:** { "status": "passed|failed", "validation": { "date_range_ok": "boolean", "fetch_complete": "boolean", "all_meetings_classified": "boolean", "scoring_scope_ok": "boolean", "dimension_scoring_complete": "boolean", "per_call_actions_complete": "boolean", "rollup_complete": "boolean", "exactly_five_team_actions": "boolean" }, "issues": [ { "severity": "blocking|warning", "issue": "string", "affected_ids": ["string"], "remediation": "string" } ], "final_deliverable": { "period": { "date_start": "YYYY-MM-DD", "date_end": "YYYY-MM-DD" }, "fetch_summary": "object", "classification_summary": "object", "scored_calls": "array", "team_rollup": "object" } }
-**Validator:** Confirm status is failed if any validation boolean is false or any blocking issue exists; confirm status is passed only when all validation booleans are true; final_deliverable must include the original fetch_summary, classification_summary, full scored_calls array, and full team_rollup object.
-**Glue to next:** This is the terminal step. If failed, route issues to the relevant earlier step for retry using affected_ids; if passed, publish final_deliverable.
+**Output contract:** JSON object: {rollup_generated_at: ISO-datetime string, coverage: {total_meetings: integer, sales_calls: integer, customer_calls: integer, internal_calls: integer, other_calls: integer, scored_calls: integer, unscored_sales_customer_calls: integer}, averages: {overall_score: number|null, by_category: object, by_dimension: {agenda_and_context: number|null, customer_understanding: number|null, value_solution_alignment: number|null, communication_and_listening: number|null, next_steps_and_ownership: number|null}}, systemic_gaps: array of {rank: integer, gap: string, affected_dimensions: array of strings, evidence_meeting_ids: array of strings, frequency: integer, severity: 'High'|'Medium'|'Low', why_it_matters: string}, team_action_items: array of exactly 5 {rank: integer 1-5, priority: 'P0'|'P1'|'P2', action: string, owner: string, success_metric: string, expected_impact: string, supporting_gap_ranks: array of integers}}
+**Validator:** Check that coverage counts reconcile with classifications and scored_calls, dimension averages are computed from scored calls only, systemic_gaps are ranked and evidence-backed by meeting_ids, and team_action_items contains exactly 5 distinct prioritized actions mapped to one or more systemic gaps. Fail if actions are generic or lack success metrics.
+**Glue to next:** Pass the rollup plus per-call scores and classifications to the final verification/formatting step as {{rollup_json}}, {{scored_calls_json}}, and {{classifications_json}}.
+
+## Step 5: final-verify-and-format
+**Role:** Quality assurance editor and final report formatter
+**Inputs:** {{meetings_json}}, {{classifications_json}}, {{scored_calls_json}}, {{rollup_json}}
+
+**Prompt:**
+```
+Verify consistency across {{meetings_json}}, {{classifications_json}}, {{scored_calls_json}}, and {{rollup_json}}. Produce the final deliverable as structured JSON suitable for downstream rendering. Include an executive summary, classification totals, per-call scorecards for Sales and Customer calls, omitted-call notes, top systemic gaps, and exactly 5 prioritized team-wide action items. Do not invent meetings, transcript evidence, or credentials. Return only the contracted JSON.
+```
+**Output contract:** JSON object: {report_metadata: {date_range: {start: ISO-date string, end: ISO-date string}, generated_at: ISO-datetime string, source: 'fireflies_mcp'}, executive_summary: string, classification_totals: {Sales: integer, Customer: integer, Internal: integer, Other: integer}, per_call_scorecards: array of {meeting_id: string, title: string|null, meeting_datetime: ISO-datetime string, category: 'Sales'|'Customer', overall_score: number, dimension_scores: object, action_items: array}, omitted_calls: array of {meeting_id: string, reason: string}, team_rollup: {averages: object, systemic_gaps: array, prioritized_team_action_items: array of exactly 5}, verification: {status: 'pass'|'fail', checks: array of {name: string, status: 'pass'|'fail', detail: string}}}
+**Validator:** Check final JSON is valid, verification.status is pass only if all checks pass, classification totals equal the classified meetings, per_call_scorecards match scored_calls exactly, omitted_calls explain any Sales or Customer calls not scored, and prioritized_team_action_items has exactly 5 items. If any reconciliation fails, output verification.status='fail' with details rather than silently correcting.
+**Glue to next:** This is the terminal output. If verification fails, route the failed artifacts back to the responsible prior step for regeneration.
 
 ## Orchestration notes
-Run the chain in batches when transcript volume exceeds context limits, but keep stable meeting_id keys and merge outputs before aggregation. Cache Step 1 raw Fireflies results by date range and meeting_id because refetching transcripts is the most expensive and least deterministic operation. For retries, rerun only the failed shard or affected_ids, then revalidate downstream joins. Treat missing transcript text as non-blocking for fetch but blocking for quality scoring if the meeting is classified as Sales or Customer unless a transcript can be refetched.
+Orchestrate transcript retrieval and scoring in batches when transcript volume exceeds the model context window, caching raw Fireflies meeting payloads by meeting_id and normalized transcript hashes so classification and scoring can be retried without refetching. Treat the Fireflies MCP connection as preexisting runtime capability only. Preserve stable meeting_id keys across all steps, and use validators as hard gates before passing artifacts forward; on failure, retry the narrow failed step with the validator error and the relevant subset of inputs.
 
 ---
 
-## 7. How to run this in Claude Code
+## 7. How to run this in Claude Cowork
 
-You have the Fireflies connector wired (`claude.ai Fireflies` shows ✓ Connected). Open a Claude Code session and say:
+The Fireflies MCP connector is already available in Claude Cowork (`claude.ai Fireflies` shows ✓ Connected). Open a Cowork session and say:
 
-> "Use the Fireflies MCP to pull all transcripts from 2025-01-01 through 2025-12-31. For each, run the per-call analysis prompt from `templates/fireflies-2025-call-analysis.md` section 3. Classify, score the Sales/Customer ones, and produce per-call action items. Then aggregate across all scored calls into a team-rollup with top 5 prioritized action items."
+> "Use the Fireflies MCP to pull all meeting transcripts from 2025-01-01 through 2026-05-13. For each, run the per-call analysis prompt from `templates/fireflies-call-analysis.md` section 3. Classify, score the Sales/Customer ones, and produce per-call action items. Then aggregate across all scored calls into a team-rollup with the top 5 prioritized action items. Save the result as `out/fireflies-2025-2026-report.md`."
 
 Claude will:
 1. Call `fireflies_get_transcripts` (or `fireflies_search`) with the date range.
@@ -841,6 +841,6 @@ Claude will:
 3. Run the per-call analysis prompt (the improved one in section 3) against each.
 4. Collect JSON results, then run an aggregation prompt for the rollup.
 
-Expected runtime depends on call count. For ~50 calls in 2025, plan for 10–20 minutes total against Sonnet.
+Expected runtime: plan ~15 seconds per call against Sonnet. ~100 calls is roughly 25 minutes. The chain's verify-and-package step (section 6, step 5) will tell you if any step came back malformed before you ship the final report.
 
-If you want a fully autonomous run, copy section 6's chain into a routine via `/anthropic-skills:schedule` or as a saved prompt.
+If you want a fully autonomous run on a schedule (e.g. monthly), copy section 6's chain into a routine via `/anthropic-skills:schedule` or save the prompt as a Cowork project asset.

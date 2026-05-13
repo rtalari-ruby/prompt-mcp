@@ -20,7 +20,7 @@ const TASK =
   "Analyze a single Fireflies meeting transcript. First classify the call as one of: Sales | Customer | Internal | Other. If the classification is Sales or Customer, score the call across five dimensions (rapport_building, discovery_quality, next_step_clarity, objection_handling, listening_ratio) on a 1-5 scale with one-sentence evidence per dimension, then produce three concrete action items the rep can apply on future calls. If the classification is Internal or Other, return the classification with one-sentence reasoning and stop. Output is a single JSON object so it can feed into a team-rollup step.";
 
 const CHAIN_TASK =
-  "Build a workflow that uses the Fireflies MCP connector to fetch all meeting transcripts from 2025-01-01 through 2025-12-31, classifies each as Sales | Customer | Internal | Other, scores Sales and Customer calls across five quality dimensions with concrete per-call action items, and produces a team-rollup with the top systemic gaps and 5 prioritized team-wide action items. Each step has its own narrow contract.";
+  "Build a workflow that uses the Fireflies MCP connector (available in Claude Cowork) to fetch all meeting transcripts from 2025-01-01 through 2026-05-13, classifies each as Sales | Customer | Internal | Other, scores Sales and Customer calls across five quality dimensions with concrete per-call action items, and produces a team-rollup with the top systemic gaps and 5 prioritized team-wide action items. Note: assume the Fireflies MCP is already connected at the runtime — do not include API key fetching, OAuth, or credential setup steps. Each step has its own narrow contract.";
 
 console.error("→ scaffold");
 const scaffold = await scaffoldPromptTool.handler({
@@ -106,11 +106,11 @@ ${chain.markdown}
 
 ---
 
-## 7. How to run this in Claude Code
+## 7. How to run this in Claude Cowork
 
-You have the Fireflies connector wired (\`claude.ai Fireflies\` shows ✓ Connected). Open a Claude Code session and say:
+The Fireflies MCP connector is already available in Claude Cowork (\`claude.ai Fireflies\` shows ✓ Connected). Open a Cowork session and say:
 
-> "Use the Fireflies MCP to pull all transcripts from 2025-01-01 through 2025-12-31. For each, run the per-call analysis prompt from \`templates/fireflies-2025-call-analysis.md\` section 3. Classify, score the Sales/Customer ones, and produce per-call action items. Then aggregate across all scored calls into a team-rollup with top 5 prioritized action items."
+> "Use the Fireflies MCP to pull all meeting transcripts from 2025-01-01 through 2026-05-13. For each, run the per-call analysis prompt from \`templates/fireflies-call-analysis.md\` section 3. Classify, score the Sales/Customer ones, and produce per-call action items. Then aggregate across all scored calls into a team-rollup with the top 5 prioritized action items. Save the result as \`out/fireflies-2025-2026-report.md\`."
 
 Claude will:
 1. Call \`fireflies_get_transcripts\` (or \`fireflies_search\`) with the date range.
@@ -118,12 +118,12 @@ Claude will:
 3. Run the per-call analysis prompt (the improved one in section 3) against each.
 4. Collect JSON results, then run an aggregation prompt for the rollup.
 
-Expected runtime depends on call count. For ~50 calls in 2025, plan for 10–20 minutes total against Sonnet.
+Expected runtime: plan ~15 seconds per call against Sonnet. ~100 calls is roughly 25 minutes. The chain's verify-and-package step (section 6, step 5) will tell you if any step came back malformed before you ship the final report.
 
-If you want a fully autonomous run, copy section 6's chain into a routine via \`/anthropic-skills:schedule\` or as a saved prompt.
+If you want a fully autonomous run on a schedule (e.g. monthly), copy section 6's chain into a routine via \`/anthropic-skills:schedule\` or save the prompt as a Cowork project asset.
 `;
 
 const here = dirname(fileURLToPath(import.meta.url));
-const outPath = resolve(here, "..", "templates", "fireflies-2025-call-analysis.md");
+const outPath = resolve(here, "..", "templates", "fireflies-call-analysis.md");
 writeFileSync(outPath, out);
 console.error(`→ wrote ${outPath} (${out.length} chars)`);
