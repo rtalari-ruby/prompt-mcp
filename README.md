@@ -33,6 +33,48 @@ The tool calls Claude (or any model — see [providers](#provider-setup)). The M
 
 ---
 
+## When to use this (and when NOT to)
+
+> Honest take from someone who built the tool: **most prompting should stay free-range.** Reach for prompt-mcp only when you've typed the same prompt 3+ times and gotten slightly different output each time.
+
+**Default to free-range.** Just type what you want to Claude.
+
+- One-off tasks
+- Exploration ("I'm not sure what I want yet")
+- Quick Q&A, summaries, rewrites
+- Creative writing where surprise matters
+- Anything where Claude's clarifying questions are useful
+
+**Reach for prompt-mcp when 2+ of these are true:**
+
+- You'll run the task **3+ times**
+- Someone else needs to run it and get the *same shape* output
+- Output is **parsed or consumed** by another tool (eval runner, doc generator, downstream prompt)
+- **Failure has real cost** (investor doc, customer email, legal review, financial check)
+- You want to **schedule or automate** it
+- You've already felt the prompt drift between attempts
+
+### Concrete examples
+
+| Task | Templated? |
+|---|---|
+| "Rewrite this paragraph less corporately" | No — free-range, one shot |
+| "What are the 3 biggest objections from a Series B partner?" | No — exploration |
+| Weekly investor update | Yes — recurring + multi-stakeholder |
+| Discovery call prep | Yes — recurring, team uses it |
+| Monthly Fireflies call review | Yes — multi-step + parseable contracts |
+| Customer-intro 1-pager | Yes — you'll send N of these |
+| Financial-model pressure-test | Yes — high stakes + evidence rules required |
+| Data-room DD audit | Yes — repeat per investor + consistency matters |
+| "Brainstorm a Series B pitch narrative" | No — creative, exploratory |
+| Candidate rejection email | Yes if you reject >2/week, otherwise no |
+
+> The tool's biggest risk is becoming engineering theatre. Building a perfect prompt for something you'll do once is procrastination. The value shows up in the 2nd, 5th, 20th run.
+>
+> **Don't template prematurely. Don't free-range the things you do every week.**
+
+---
+
 ## The 8 tools
 
 | Slash invocation | Tool name | Purpose | Calls LLM? |
@@ -270,13 +312,30 @@ prompt-mcp/
 
 ---
 
-## What's in `templates/`
+## Ready-made templates
 
-Concrete prompt templates that scaffold_prompt has produced or that we've hand-tuned. Use them as starting points; replace the `{{var}}` placeholders with your inputs.
+Drop-in prompts under [`templates/`](./templates) — copy, fill the `{{vars}}`, send. Each was produced by `scaffold_prompt` (or `scaffold` → `improve`) and hardened with the patterns in [EXAMPLES.md](./EXAMPLES.md).
 
-- `relvino-customer-intro-1pager.md` — 1-page customer-intro brief from materials, designed for investor forward-along.
+- 📞 **[`fireflies-call-analysis.md`](./templates/fireflies-call-analysis.md)** — Audit every Fireflies meeting transcript in a date range. Classifies each as Sales / Customer / Internal / Other, scores Sales+Customer calls across 5 quality dimensions with cited evidence, produces per-call action items, then rolls up into a team-level scorecard with the top systemic gaps and 5 prioritized team-wide actions. Built as a 5-step chain with strict JSON contracts between steps.
+- 🤝 **[`relvino-customer-intro-1pager.md`](./templates/relvino-customer-intro-1pager.md)** — One-page customer-intro brief that an investor will forward to companies in their network. Anti-fabrication: only claims what's actually in the attached materials. Escape hatch if materials are insufficient.
+- 💰 **[`financial-model-pressure-test.md`](./templates/financial-model-pressure-test.md)** — Unbiased CFO-grade pressure-test of a financial model AND an analyst's written feedback on it. Evidence-cited PASS / CONDITIONAL_PASS / FAIL verdict, materiality-ranked findings, max 5 bullets per section, three confidence levels, escape hatch when inputs are unparseable.
+- 🗄️ **[`relvino-data-room-audit.md`](./templates/relvino-data-room-audit.md)** — Full due-diligence audit of a data room folder. G/Y/R scorecard across 10 categories, file-cited gaps and risks, diligence-blocker list, quick-fix list (≤1 week), and pre-empted "open questions for management."
 
-Add your own — they're just text. The pattern is: `<system>` role + `<documents>` block + `<task>` + `<constraints>` + `<output_contract>` + `<escape_hatch>`.
+Add your own — they're just markdown. The pattern is: `<system>` role + `<documents>` block + `<task>` + `<constraints>` + `<output_contract>` + `<escape_hatch>`.
+
+### How to use one
+
+1. Open Claude Code or Claude Desktop.
+2. Drag in any source materials (PDFs, docs, spreadsheets).
+3. Open the template file, copy the section between the triple backticks labeled "The prompt".
+4. Paste into Claude. Replace each `{{var}}` with your input (or write "see attached files").
+5. Send.
+
+For iterating on a template (tighten tone, add a section, change the rubric), say:
+
+> "Use `critique_prompt` on this prompt, then `improve_prompt`. Focus on `<your focus>`."
+
+You'll get a diff with what changed and why.
 
 ---
 
