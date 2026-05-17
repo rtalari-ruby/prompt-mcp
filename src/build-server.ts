@@ -13,6 +13,16 @@ import { buildEvalTool } from "./tools/eval.js";
 import { designChainTool } from "./tools/chain.js";
 import { explainConceptTool } from "./tools/explain.js";
 
+// Manifest KB tools (the "promptforge" family).
+// Personal prompt-manifest store with karpathy + superpowers references baked
+// in, indexed in SQLite, and shared across sessions via $PROMPTFORGE_HOME.
+import { createManifestTool } from "./tools/manifest-create.js";
+import { findManifestTool } from "./tools/manifest-find.js";
+import { applyManifestTool } from "./tools/manifest-apply.js";
+import { listManifestsTool } from "./tools/manifest-list.js";
+import { logSessionTool } from "./tools/manifest-log-session.js";
+import { scopeFeatureTool } from "./tools/manifest-scope-feature.js";
+
 type ToolModule = {
   name: string;
   title: string;
@@ -30,6 +40,7 @@ type ToolModule = {
 };
 
 export const TOOLS: ToolModule[] = [
+  // Prompt-engineering family (LLM-backed via sampling).
   scaffoldPromptTool,
   improvePromptTool,
   critiquePromptTool,
@@ -38,6 +49,13 @@ export const TOOLS: ToolModule[] = [
   buildEvalTool,
   designChainTool,
   explainConceptTool,
+  // Manifest KB family (personal store; no LLM, no API key).
+  createManifestTool,
+  findManifestTool,
+  applyManifestTool,
+  listManifestsTool,
+  logSessionTool,
+  scopeFeatureTool,
 ];
 
 export function buildServer(): McpServer {

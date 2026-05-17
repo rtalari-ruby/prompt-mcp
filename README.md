@@ -1,6 +1,9 @@
 # prompt-mcp
 
-A local MCP server that gives Claude 8 Claude-native prompt-engineering tools — scaffold, improve, critique, eval, chain, generate examples, apply techniques, look up concepts — backed by a 55-file knowledge base curated from [dair-ai/Prompt-Engineering-Guide](https://github.com/dair-ai/Prompt-Engineering-Guide) and [Anthropic's prompt engineering docs](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/).
+A local MCP server with **14 tools** in two families:
+
+1. **Prompt-engineering** (8 LLM-backed) — scaffold, improve, critique, eval, chain, generate examples, apply techniques, look up concepts. Backed by a 55-file knowledge base curated from [dair-ai/Prompt-Engineering-Guide](https://github.com/dair-ai/Prompt-Engineering-Guide) and [Anthropic's prompt engineering docs](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/).
+2. **Manifest KB** (6 deterministic, no LLM) — `pf_create_prompt`, `pf_find_prompt`, `pf_apply_prompt`, `pf_list_prompts`, `pf_log_session`, `pf_scope_feature`. A personal prompt-manifest store with `karpathy-guidelines` + `superpowers:*` references baked into every manifest, indexed in SQLite, shared across sessions via `$PROMPTFORGE_HOME`. Wires into atlas/Forge's autonomous pipeline (see [`promptforge/HANDOFF_FOR_CTO.md`](../promptforge/HANDOFF_FOR_CTO.md)).
 
 **No API key required** by default. The tools use **MCP sampling** to call back into the same Claude that's running your session (Claude Code or Desktop). Optional Azure OpenAI fallback for environments that don't support sampling.
 
@@ -10,8 +13,9 @@ A local MCP server that gives Claude 8 Claude-native prompt-engineering tools �
   │ Claude Desktop       │◀────────│   prompt-mcp        │◀──────────┐
   └─────┬────────────────┘         │   (Node, local)     │           │
         │                          │                     │           │
-        │ user says "scaffold a    │   8 tools           │           │
-        │ prompt for..."           │   55-file KB        │           │
+        │ user says "scaffold a    │   8 prompt tools    │           │
+        │ prompt for..." OR        │   6 manifest tools  │           │
+        │ "/create-prompt..."      │   55-file KB        │           │
         ▼                          └─────────────────────┘           │
    tool call ─────────────────────────────────────────────────────────┘
    (the tool asks the host Claude to do the LLM work — zero extra cost)
@@ -27,9 +31,11 @@ A local MCP server that gives Claude 8 Claude-native prompt-engineering tools �
 
 ## Why this exists
 
-Most prompt-engineering tools are generic. Claude has specific levers — XML tags, `<thinking>` blocks, prefilling, document-first ordering, extended thinking — that a generic tool dilutes. The 8 tools in this server are tuned for those levers, and the KB is annotated with `claude_notes:` for every technique.
+Most prompt-engineering tools are generic. Claude has specific levers — XML tags, `<thinking>` blocks, prefilling, document-first ordering, extended thinking — that a generic tool dilutes. The 8 prompt-engineering tools in this server are tuned for those levers, and the KB is annotated with `claude_notes:` for every technique.
 
-The tool calls Claude (or any model — see [providers](#provider-setup)). The MCP layer sits between your editor and your prompts so you can scaffold → critique → improve → eval without leaving chat.
+The 6 manifest KB tools solve a separate problem: keeping personal prompt context across sessions. Free-range asks become structured manifests with karpathy + superpowers references attached. Future sessions search the KB and resume context with `pf_apply_prompt`. The same manifests feed atlas/Forge's autonomous pipeline via a `forge.ready: true` handshake.
+
+The tool calls Claude (or any model — see [providers](#provider-setup)). The MCP layer sits between your editor and your prompts so you can scaffold → critique → improve → eval without leaving chat. The manifest tools never call out — they read and write your local KB only.
 
 ---
 
@@ -75,7 +81,9 @@ The tool calls Claude (or any model — see [providers](#provider-setup)). The M
 
 ---
 
-## The 8 tools
+## The 14 tools
+
+### Prompt-engineering family (LLM-backed via MCP sampling)
 
 | Slash invocation | Tool name | Purpose | Calls LLM? |
 |---|---|---|---|
@@ -89,6 +97,19 @@ The tool calls Claude (or any model — see [providers](#provider-setup)). The M
 | "Explain `extended-thinking`" | `explain_concept` | KB reference card lookup. | no |
 
 LLM tools take ~5–40s per call on `gpt-5.5` (reasoning model). Disk-cached on inputs, so re-runs are instant. See [EXAMPLES.md](./EXAMPLES.md) for worked walk-throughs of each.
+
+### Manifest KB family (deterministic, no LLM, $PROMPTFORGE_HOME)
+
+| Slash invocation | Tool name | Purpose | Calls LLM? |
+|---|---|---|---|
+| "Capture this as a prompt..." | `pf_create_prompt` | Turn free-text into a structured manifest with karpathy + superpowers refs. Surfaces near-duplicates. | no |
+| "Find a prompt for..." | `pf_find_prompt` | LIKE-based ranking search over manifests (title + tags weighted, body backed). | no |
+| "Apply prompt `<id>`" | `pf_apply_prompt` | Render a stored manifest as a prompt block, bump `use_count`. | no |
+| "List my prompts" | `pf_list_prompts` | Browse the KB. Filter by type / repo. | no |
+| "Log this session..." | `pf_log_session` | Persist a transcript (raw text or absolute path) under `kb/sessions/` with frontmatter. | no |
+| "Scope this feature for forge" | `pf_scope_feature` | `pf_create_prompt` + always `type=feature` + populated `## Forge Instruction` section. | no |
+
+Manifests live in `$PROMPTFORGE_HOME` (default `~/.promptforge/kb`). Source of truth is the markdown files; the SQLite index in `kb/index.sqlite` is derived and rebuildable. Sister repo [`promptforge/`](../promptforge/) provides the CLI, Hono UI, slash-command skills, and atlas plugin shim for these same tools.
 
 ---
 
@@ -253,7 +274,7 @@ Replace `src/llm/client.ts` (~150 lines). Keep the same `chat(messages, opts)` s
 
 | Problem | Cause / Fix |
 |---|---|
-| `/mcp` doesn't show `prompt` | Server failed to start. Run `node dist/server.js < /dev/null` manually — it should print `prompt-mcp ready (8 tools, stdio)` to stderr. Errors will tell you what's missing. |
+| `/mcp` doesn't show `prompt` | Server failed to start. Run `node dist/server.js < /dev/null` manually — it should print `prompt-mcp ready (14 tools, stdio)` to stderr. Errors will tell you what's missing. |
 | "no sampling-capable host and no AZURE_OPENAI_* in env" | Your MCP client doesn't support sampling AND you haven't set up the Azure fallback. Either upgrade Claude Code/Desktop, or add `AZURE_OPENAI_*` to `.env`. |
 | Sampling permission prompt every call | Some hosts ask once per session, some ask each time. Look in your Claude Code settings for a "trust this MCP server's sampling" toggle. |
 | First LLM call is slow | Expected. The host's reasoning model can take 5–40s on heavy tools. Subsequent identical calls hit the disk cache and return instantly. |
@@ -272,7 +293,7 @@ npm run build             # tsc → dist/
 npm test                  # build + smoke
 
 # individual smokes
-npx tsx scripts/smoke/run-all.ts       # MCP server lists 8 tools
+npx tsx scripts/smoke/run-all.ts       # MCP server lists 14 tools + manifest KB round-trip
 npx tsx scripts/smoke/kb.ts            # KB index works
 npx tsx scripts/smoke/technique.ts     # all 10 deterministic transforms
 npx tsx scripts/smoke/llm-tools.ts     # all 6 LLM tools (uses cache after first run)
