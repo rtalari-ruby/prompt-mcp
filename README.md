@@ -314,21 +314,35 @@ prompt-mcp/
 
 ## Ready-made templates
 
-Drop-in prompts under [`templates/`](./templates) — copy, fill the `{{vars}}`, send. Each was produced by `scaffold_prompt` (or `scaffold` → `improve`) and hardened with the patterns in [EXAMPLES.md](./EXAMPLES.md).
+Drop-in prompts under [`templates/`](./templates) — copy, fill the one labeled input (if any), send. **You don't need the MCP server wired to use these** — they're just markdown you paste into Claude Code or Desktop. See the [engineering templates index](./templates/ENGINEERING.md) for the dev set.
 
-- 📞 **[`fireflies-call-analysis.md`](./templates/fireflies-call-analysis.md)** — Audit every Fireflies meeting transcript in a date range. Classifies each as Sales / Customer / Internal / Other, scores Sales+Customer calls across 5 quality dimensions with cited evidence, produces per-call action items, then rolls up into a team-level scorecard with the top systemic gaps and 5 prioritized team-wide actions. Built as a 5-step chain with strict JSON contracts between steps.
-- 🤝 **[`relvino-customer-intro-1pager.md`](./templates/relvino-customer-intro-1pager.md)** — One-page customer-intro brief that an investor will forward to companies in their network. Anti-fabrication: only claims what's actually in the attached materials. Escape hatch if materials are insufficient.
-- 💰 **[`financial-model-pressure-test.md`](./templates/financial-model-pressure-test.md)** — Unbiased CFO-grade pressure-test of a financial model AND an analyst's written feedback on it. Evidence-cited PASS / CONDITIONAL_PASS / FAIL verdict, materiality-ranked findings, max 5 bullets per section, three confidence levels, escape hatch when inputs are unparseable.
-- 🗄️ **[`relvino-data-room-audit.md`](./templates/relvino-data-room-audit.md)** — Full due-diligence audit of a data room folder. G/Y/R scorecard across 10 categories, file-cited gaps and risks, diligence-blocker list, quick-fix list (≤1 week), and pre-empted "open questions for management."
+### Engineering (paste into Claude Code, in your repo)
 
-Add your own — they're just markdown. The pattern is: `<system>` role + `<documents>` block + `<task>` + `<constraints>` + `<output_contract>` + `<escape_hatch>`.
+Low-variable — most auto-detect the repo, PR, branch, and test command. Each spawns parallel sub-agents where it helps and ends with a merge-ready verdict.
+
+- 🐛 **[`fix-bug.md`](./templates/fix-bug.md)** — Reproduce with a failing test, isolate, fix, confirm the test passes and nothing else broke.
+- ♻️ **[`refactor.md`](./templates/refactor.md)** — Behavior-preserving cleanup. Green tests before and after, small reviewable commits, no scope creep.
+- ✨ **[`implement-feature.md`](./templates/implement-feature.md)** — Clarify acceptance criteria → plan → implement in small commits → test → self-review.
+- 🔍 **[`review-pr.md`](./templates/review-pr.md)** — Multi-lens review (correctness / security / performance / readability / tests) in parallel, then a synthesized verdict.
+- 🤝 **[`handoff-feedback.md`](./templates/handoff-feedback.md)** — Take a colleague's feedback, verify prior work, fix, and emit a PR description + a Slack message back to them.
+- 🔁 **[`bugbot-loop.md`](./templates/bugbot-loop.md)** — Loop fetch → classify → fix → verify → push → wait until Bugbot is clean. Zero fill-ins.
+- 🧹 **[`modularize-cleanup.md`](./templates/modularize-cleanup.md)** — Safely delete proven-dead code and modularize a sprawling area. Only deletes what's provably unused; flags the rest.
+
+### Business / GTM
+
+- 📞 **[`fireflies-call-analysis.md`](./templates/fireflies-call-analysis.md)** — Audit every Fireflies meeting transcript in a date range. Classifies each as Sales / Customer / Internal / Other, scores Sales+Customer calls across 5 quality dimensions with cited evidence, produces per-call action items, then rolls up into a team-level scorecard. 5-step chain with strict JSON contracts.
+- 🤝 **[`relvino-customer-intro-1pager.md`](./templates/relvino-customer-intro-1pager.md)** — One-page customer-intro brief for an investor to forward. Anti-fabrication: only claims what's in the attached materials.
+- 💰 **[`financial-model-pressure-test.md`](./templates/financial-model-pressure-test.md)** — Unbiased CFO-grade pressure-test of a financial model AND an analyst's feedback on it. Evidence-cited PASS / CONDITIONAL_PASS / FAIL verdict.
+- 🗄️ **[`relvino-data-room-audit.md`](./templates/relvino-data-room-audit.md)** — Full DD audit of a data room folder. G/Y/R scorecard across 10 categories, file-cited gaps and risks, diligence-blocker list.
+
+Add your own — they're just markdown. The pattern is: `<system>` role + `<context>` (with defaults) + `<workflow>` + `<output_contract>` + `<escape_hatch>`.
 
 ### How to use one
 
-1. Open Claude Code or Claude Desktop.
-2. Drag in any source materials (PDFs, docs, spreadsheets).
-3. Open the template file, copy the section between the triple backticks labeled "The prompt".
-4. Paste into Claude. Replace each `{{var}}` with your input (or write "see attached files").
+1. Open Claude Code or Claude Desktop (for engineering templates, open it **in the repo**).
+2. Drag in any source materials (PDFs, docs, spreadsheets) if the template needs them.
+3. Open the template file, copy the block under "The prompt".
+4. Paste into Claude. Replace the one labeled input if there is one (or write "see attached files").
 5. Send.
 
 For iterating on a template (tighten tone, add a section, change the rubric), say:
